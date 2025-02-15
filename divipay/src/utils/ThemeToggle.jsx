@@ -2,29 +2,23 @@
 
 import { useEffect, useState } from "react";
 
-export default function ThemeToggle() {
-  const [theme, setTheme] = useState(null);
+export default function ThemeToggle({setTheme, theme}) {
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") || "light";
-    setTheme(savedTheme);
-
-    if (savedTheme === "dark") {
+    if (theme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-  }, []);
+  }, [theme]);
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme);
-
-    document.documentElement.classList.toggle("dark", newTheme === "dark");
   };
 
-  if (theme === null) return null; // Avoid hydration mismatch
+//  if (theme === null) return null; // Avoid hydration mismatch
 
   return (
     <button
