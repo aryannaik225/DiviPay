@@ -106,30 +106,51 @@ export default function Home() {
     console.log("Items: ", items);
 
     items.forEach(item => {
+      let discountTotal = 0;
+      discounts.forEach(discount => {
+        if (discount.symbol === '%') {
+          discountTotal += discount.value;
+        } else {
+          discountTotal += (discount.value / totalCost) * 100;
+        }
+      })
+
+      let itemCost = item.cost - (item.cost * (discountTotal / 100));
+
+
       let totalPortion = 0;
       item.sharedBy.forEach(({ portion }) => {
-        totalPortion += portion;
+        totalPortion += parseInt(portion, 10);
       });
+
+      console.log("Total Portion: ", totalPortion);
 
       item.sharedBy.forEach(({ name, portion }) => {
         if (sharedCosts[name]) {
-          sharedCosts[name] += item.cost * (portion / 8);
+          sharedCosts[name] += itemCost * (portion / totalPortion);
         } else {
-          sharedCosts[name] = item.cost * (portion / 8);
+          sharedCosts[name] = itemCost * (portion / totalPortion);
         }
       });
     });
 
-    console.log("Shared Costs: ", sharedCosts);
+    let totalPeople = Object.keys(sharedCosts).length;
 
-    const perPersonCost = {};
+    let individualTax = taxAmount / totalPeople;
 
-    names.forEach(name => {
-      perPersonCost[name] = sharedCosts[name] || 0; // Ensure no division by undefined
+    Object.keys(sharedCosts).forEach(name => {
+      sharedCosts[name] += individualTax;
     });
 
-    console.log("Per Person Cost: ", perPersonCost);
+    console.log("Shared Costs: ", sharedCosts);
 
+    if (selectedCurrency.rounding === true) {
+      Object.keys(sharedCosts).forEach(name => {
+        sharedCosts[name] = Math.round(sharedCosts[name]);
+      });
+    }
+
+    console.log("Shared Costs After Rounding: ", sharedCosts);
 
     // const sharedCosts = {};
 
