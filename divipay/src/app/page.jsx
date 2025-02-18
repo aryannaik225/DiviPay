@@ -2,17 +2,10 @@
 
 import ThemeToggle from "@/utils/ThemeToggle";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-const currencyList = [
-  { name: "Indian Rupee", symbol: "₹" },
-  { name: "Euro", symbol: "€" },
-  { name: "Belize Dollar", symbol: "BZ$" },
-  { name: "Hong Kong Dollar", symbol: "HK$" },
-  { name: "Pakistani Rupee", symbol: "Rs" },
-];
+import currencyList from "@/utils/currency.js";
 
 export default function Home() {
 
@@ -37,6 +30,8 @@ export default function Home() {
   const [currencyInput, setCurrencyInput] = useState("");
   const [filteredCurrencies, setFilteredCurrencies] = useState(currencyList);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState({ name: "Indian Rupee", symbol: "₹" });
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") || "light";
@@ -176,7 +171,19 @@ export default function Home() {
     setShowDropdown(true);
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleCurrencySelect = (currency) => {
+    setSelectedCurrency(currency);
     setCurrencyInput(`${currency.name} (${currency.symbol})`);
     setShowDropdown(false);
   };
@@ -241,8 +248,43 @@ export default function Home() {
         </div>
 
 
+        {/* Currency Input */}
+        <div className="w-full">
+          <label className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular">
+            Select Currency
+          </label>
+
+          <input 
+            type="text" 
+            value={currencyInput}
+            onChange={handleCurrencyInputChange}
+            onFocus={() => setShowDropdown(true)}
+            placeholder="Type or select a currency"
+            className="w-full p-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular"
+          />
+
+          {showDropdown && (
+            <ul className="absolute w-[400px] mt-1 max-h-40 overflow-auto bg-[#e5e5e5] dark:bg-[#2f2f2f] rounded shadow-lg">
+              {filteredCurrencies.length > 0 ? (
+                filteredCurrencies.map((currency, index) => (
+                  <li
+                    key={index}
+                    onClick={() => handleCurrencySelect(currency)}
+                    className="p-2 cursor-pointer hover:bg-blue-400 dark:hover:bg-blue-400 text-[#1f1f1f] dark:text-white transition-colors"
+                  >
+                    {currency.name} ({currency.symbol})
+                  </li>
+                ))
+              ) : (
+                <li className="p-2 text-[#1f1f1f] dark:text-white">No currencies found</li>
+              )}
+            </ul>
+          )}
+        </div>
+
+
         {/* Purchased Items */}
-        <div className="mb-8">
+        <div className="mb-8 mt-10">
           <label className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular">
             Add Purchased Items
           </label>
@@ -302,7 +344,7 @@ export default function Home() {
           <div key={index} className="flex items-center justify-between p-3 bg-[#d9d9d9] dark:bg-gray-700 rounded mb-2">
             <div>
               <p className="text-[#1f1f1f] dark:text-white">
-              <b>{item.name}</b> -- {item.quantity} × ₹{item.costPerUnit} = <b>₹{item.cost}</b>
+              <b>{item.name}</b> -- {item.quantity} × {selectedCurrency.symbol}{item.costPerUnit} = <b>{selectedCurrency.symbol}{item.cost}</b>
               </p>
               <p className="text-sm text-[#1f1f1f] dark:text-white">
                 Shared by: {item.sharedBy.map(({ name, portion }) => `${name} (x${portion})`).join(", ")}
@@ -339,7 +381,7 @@ export default function Home() {
               className="w-1/3 p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular appearance-none"
             >
               <option value="%">%</option>
-              <option value="₹">₹</option>
+              <option value={selectedCurrency.symbol}>{selectedCurrency.symbol}</option>
             </select>
           </div>
           <button
@@ -396,7 +438,7 @@ export default function Home() {
               className="w-1/3 p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular appearance-none"
             >
               <option value="%">%</option>
-              <option value="₹">₹</option>
+              <option value={selectedCurrency.symbol}>{selectedCurrency.symbol}</option>
             </select>
           </div>
 
@@ -425,38 +467,6 @@ export default function Home() {
               </button>
             </div>
           ))}
-        </div>
-
-
-        {/* Currency Input */}
-        <div className="w-full mt-10">
-          <label className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular">
-            Select Currency
-          </label>
-
-          <input 
-            type="text" 
-            value={currencyInput}
-            onChange={handleCurrencyInputChange}
-            onFocus={() => setShowDropdown(true)}
-            placeholder="Type or select a currency"
-            className="w-full p-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular"
-          />
-
-          {showDropdown && (
-            <ul className="absolute w-[400px] mt-1 max-h-40 overflow-auto bg-[#e5e5e5] dark:bg-[#2f2f2f] rounded shadow-lg">
-              {filteredCurrencies.map((currency, index) => (
-                <li
-                  key={index}
-                  onClick={() => handleCurrencySelect(currency)}
-                  className="p-2 cursor-pointer hover:bg-blue-400 dark:hover:bg-blue-400 text-[#1f1f1f] dark:text-white transition-colors"
-                >
-                  {currency.name} ({currency.symbol})
-                </li>
-              ))}
-            </ul>
-          )}
-
         </div>
 
       </form>
