@@ -17,6 +17,10 @@ export default function Home() {
   const [costInput, setCostInput] = useState("")
   const [portions, setPortions] = useState({})
   const [selectedNames, setSelectedNames] = useState([])
+  const [quantityInput, setQuantityInput] = useState("");
+  const [discountInput, setDiscountInput] = useState("");
+  const [discountSymbol, setDiscountSymbol] = useState("%");
+  const [discounts, setDiscounts] = useState([]);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") || "light";
@@ -54,17 +58,25 @@ export default function Home() {
   }
 
   const handlePortionChange = (name, portion) => {
-    setPortions({ ...portions, [name]: portion })
-  }
+    if (portion === "" || /^[0-9]*$/.test(portion)) {
+      setPortions({ ...portions, [name]: portion });
+    }
+  };
 
   const addItem = () => {
     if (itemInput.trim() && costInput.trim() && selectedNames.length > 0) {
+
+      const quantity = parseInt(quantityInput, 10) || 1;
+      const costPerUnit = parseFloat(costInput);
+      const totalCost = quantity * costPerUnit;
+
       setItems([
         ...items,
-        { name: itemInput, cost: parseFloat(costInput), sharedBy: selectedNames.map((name) => ({name, portion: portions[name] || '1'})) },
+        { name: itemInput, cost: totalCost, quantity, costPerUnit, sharedBy: selectedNames.map((name) => ({name, portion: portions[name] || '1'})) },
       ]);
       setItemInput("");
       setCostInput("");
+      setQuantityInput("");
       setSelectedNames([]);
       setPortions({});
     } else if (!itemInput.trim()) {
@@ -74,6 +86,10 @@ export default function Home() {
     } else if (!costInput.trim()) {
       toast.error("Cost cannot be empty", {
         toastId: "costEmptyWarning",
+      });
+    } else if (!quantityInput.trim()) {
+      toast.error("Quantity cannot be empty", {
+        toastId: "quantityEmptyWarning",
       });
     } else if (selectedNames.length === 0) {
       toast.error("At least one name must be selected", {
@@ -91,6 +107,17 @@ export default function Home() {
     console.log("Submitted")
   }
 
+  const addDiscount = () => {
+    if (discountInput.trim()) {
+      setDiscounts([...discounts, { value: parseFloat(discountInput), symbol: discountSymbol }]);
+      setDiscountInput("");
+    } else {
+      toast.error("Discount value cannot be empty", {
+        toastId: "discountEmptyWarning",
+      });
+    }
+  }
+
   if (theme === null) return null;
 
   return (
@@ -106,7 +133,7 @@ export default function Home() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="w-[400px]">
+      <form onSubmit={handleSubmit} className="w-[400px] flex flex-col">
 
         {/* Name Input */}
         <div className="mb-10">
@@ -151,17 +178,27 @@ export default function Home() {
 
 
         {/* Purchased Items */}
-        <div className="mb-4">
+        <div className="mb-8">
           <label className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular">
             Add Purchased Items
           </label>
-          <input 
-            type="text"
-            value={itemInput}
-            onChange={(e) => setItemInput(e.target.value)}
-            placeholder="Item Name"
-            className="w-full p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular" 
-          />
+          <div className="w-full flex gap-[6px]">
+            <input 
+              type="text"
+              value={itemInput}
+              onChange={(e) => setItemInput(e.target.value)}
+              placeholder="Item Name"
+              className="w-full p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular" 
+            />
+            <input 
+              type="number"
+              value={quantityInput}
+              onChange={(e) => setQuantityInput(e.target.value)}
+              placeholder="Quantity"
+              min="1"
+              className="w-2/6 p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular"
+            />
+          </div>
           <input 
             type="number"
             value={costInput}
@@ -181,7 +218,7 @@ export default function Home() {
                   {name}
                 </button>
                 {selectedNames.includes(name) && (
-                  <input type="number" min="1" value={portions[name] || "1"} onChange={(e) => handlePortionChange(name, e.target.value)} className="w-16 p-1 rounded bg-gray-300" />
+                  <input type="number" placeholder="Portion" min="1" value={portions[name] ?? ""} onChange={(e) => handlePortionChange(name, e.target.value)} className="w-16 p-1 rounded bg-[#d9d9d9] dark:bg-[#374151] text-[#1f1f1f] dark:text-white placeholder:text-sm placeholder:ml-[2px]" />
                 )}
               </div>
             ))}
@@ -196,12 +233,12 @@ export default function Home() {
         </div>
 
         {/* Displaying Added Items */}
-        <div className="mt-10">
+        <div className="mt-0">
           {items.map((item, index) => (
           <div key={index} className="flex items-center justify-between p-3 bg-[#d9d9d9] dark:bg-gray-700 rounded mb-2">
             <div>
               <p className="text-[#1f1f1f] dark:text-white">
-                <b>{item.name}</b> - ${item.cost}
+              <b>{item.name}</b> -- {item.quantity} × ₹{item.costPerUnit} = <b>₹{item.cost}</b>
               </p>
               <p className="text-sm text-[#1f1f1f] dark:text-white">
                 Shared by: {item.sharedBy.map(({ name, portion }) => `${name} (x${portion})`).join(", ")}
@@ -217,6 +254,50 @@ export default function Home() {
           </div>
           ))}
         </div>
+
+
+        {/* Discounts */}
+        <div className="w-full mt-10">
+          <label className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular">
+            Add Discounts
+          </label>
+          <div className="w-full flex gap-[6px]">
+            <input 
+              type="number"
+              value={discountInput}
+              onChange={(e) => setDiscountInput(e.target.value)}
+              placeholder="Discount"
+              className="w-full p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular no-arrows"
+            />
+            <select
+              value={discountSymbol}
+              onChange={(e) => setDiscountSymbol(e.target.value)}
+              className="w-1/3 p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular appearance-none"
+            >
+              <option value="%">%</option>
+              <option value="₹">₹</option>
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={addDiscount}
+            className="mt-2 p-2 w-full bg-[#e5e5e5] dark:bg-[#2f2f2f] dark:hover:bg-[#1f1f1f] text-white rounded"
+          >
+            Add Discount
+          </button>
+        </div>
+
+        {/* Displaying the added discounts */}
+        <div className="mt-4">
+          {discounts.map((discount, index) => (
+            <div key={index} className="flex items-center justify-between p-3 bg-[#d9d9d9] dark:bg-gray-700 rounded mb-2">
+              <p className="text-[#1f1f1f] dark:text-white">
+                <b>{discount.value}{discount.symbol}</b>
+              </p>
+            </div>
+          ))}
+        </div>
+
       </form>
 
     </div>
