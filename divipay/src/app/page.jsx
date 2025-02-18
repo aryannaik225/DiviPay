@@ -33,6 +33,70 @@ export default function Home() {
   const [selectedCurrency, setSelectedCurrency] = useState({ name: "Indian Rupee", symbol: "₹" });
   const dropdownRef = useRef(null);
 
+
+  const handleCalculation = () => {
+
+    // Here's an updated handleSubmit function that calculates:
+
+    // Total Cost (Before Discounts & Taxes)
+    // Total Discount Amount
+    // Total After Discount
+    // Total Tax Amount
+    // Final Total (After Discounts & Taxes)
+    // Per Person Contribution
+
+    if (items.length === 0) {
+      toast.error("Please add at least one item to calculate", {
+        toastId: "noItemsWarning",
+      });
+      return;
+    }
+
+    let totalCost = 0;
+    let discountAmount = 0;
+    let taxAmount = 0;
+
+    items.forEach(item => {
+      totalCost += item.cost;
+    })
+
+    discounts.forEach(discount => {
+      if (discount.symbol === "%") {
+        discountAmount += (discount.value / 100) * totalCost;
+      } else {
+        discountAmount += discount.value;
+      }
+    }
+    )
+
+    const totalAfterDiscount = totalCost - discountAmount;
+
+    taxes.forEach(tax => {
+      if (tax.symbol === "%") {
+        taxAmount += (tax.value / 100) * totalAfterDiscount;
+      } else {
+        taxAmount += tax.value;
+      }
+    }
+    )
+
+    const finalTotal = totalAfterDiscount + taxAmount;
+
+    console.log("Total Cost: ", totalCost);
+    console.log("Total Discount: ", discountAmount);
+    console.log("Total After Discount: ", totalAfterDiscount);
+    console.log("Total Tax: ", taxAmount);
+    console.log("Final Total: ", finalTotal);
+
+    if (selectedCurrency.rounding === true) {
+      const newTotal = Math.round(finalTotal);
+      const roundingDifference = newTotal - finalTotal;
+      console.log("Rounding Difference: ", roundingDifference);
+      console.log("New Total: ", newTotal);
+    }
+  }
+
+
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") || "light";
     setTheme(savedTheme);
@@ -203,6 +267,8 @@ export default function Home() {
           <ThemeToggle theme={theme} setTheme={setTheme}/>
         </div>
       </div>
+
+      <h2 className="text-2xl poppins-bold text-[#1f1f1f] dark:text-white mb-10 underline">Split Expenses</h2>
 
       <form onSubmit={handleSubmit} className="w-[400px] flex flex-col">
 
@@ -468,6 +534,14 @@ export default function Home() {
             </div>
           ))}
         </div>
+
+        <button
+          type="submit"
+          className="mt-10 p-2 bg-green-500 text-white rounded"
+          onClick={handleCalculation}
+        >
+          Calculate
+        </button>
 
       </form>
 
