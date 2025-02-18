@@ -94,6 +94,75 @@ export default function Home() {
       console.log("Rounding Difference: ", roundingDifference);
       console.log("New Total: ", newTotal);
     }
+
+    // calculating per person cost. Cant directly divide by the number of people because of the portions as well as only some dishes being shared by some people while some dishes are shared by all, and some are not shared at all.
+    // So, we need to calculate the total cost of the items shared by each person and then divide by the number of people.
+    // We can do this by creating a new object with the name of the person as the key and the total cost of the items shared by that person as the value.
+    // Then we can divide each value by the number of people to get the per person cost.
+
+
+    const sharedCosts = {};
+
+    console.log("Items: ", items);
+
+    items.forEach(item => {
+      let totalPortion = 0;
+      item.sharedBy.forEach(({ portion }) => {
+        totalPortion += portion;
+      });
+
+      item.sharedBy.forEach(({ name, portion }) => {
+        if (sharedCosts[name]) {
+          sharedCosts[name] += item.cost * (portion / 8);
+        } else {
+          sharedCosts[name] = item.cost * (portion / 8);
+        }
+      });
+    });
+
+    console.log("Shared Costs: ", sharedCosts);
+
+    const perPersonCost = {};
+
+    names.forEach(name => {
+      perPersonCost[name] = sharedCosts[name] || 0; // Ensure no division by undefined
+    });
+
+    console.log("Per Person Cost: ", perPersonCost);
+
+
+    // const sharedCosts = {};
+
+    // console.log("Items: ", items);
+
+    // items.forEach(item => {
+    //   let totalPortion = 0;
+    //   item.sharedBy.forEach(({ portion }) => {
+    //     totalPortion += portion;
+    //   });
+
+    //   item.sharedBy.forEach(({ name, portion }) => {
+    //     if (sharedCosts[name]) {
+    //       sharedCosts[name] += item.cost * (portion / totalPortion);
+    //     } else {
+    //       sharedCosts[name] = item.cost * (portion / totalPortion);
+    //     }
+    //   });
+    // }
+    // )
+
+    // console.log("Shared Costs: ", sharedCosts);
+
+    // const numberOfPeople = names.length;
+    // const perPersonCost = {};
+
+    // names.forEach(name => {
+    //   perPersonCost[name] = sharedCosts[name] / numberOfPeople;
+    // }
+    // )
+
+    // console.log("Per Person Cost: ", perPersonCost);
+
   }
 
 
