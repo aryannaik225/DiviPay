@@ -36,15 +36,6 @@ export default function Home() {
 
   const handleCalculation = () => {
 
-    // Here's an updated handleSubmit function that calculates:
-
-    // Total Cost (Before Discounts & Taxes)
-    // Total Discount Amount
-    // Total After Discount
-    // Total Tax Amount
-    // Final Total (After Discounts & Taxes)
-    // Per Person Contribution
-
     if (items.length === 0) {
       toast.error("Please add at least one item to calculate", {
         toastId: "noItemsWarning",
@@ -66,8 +57,7 @@ export default function Home() {
       } else {
         discountAmount += discount.value;
       }
-    }
-    )
+    })
 
     const totalAfterDiscount = totalCost - discountAmount;
 
@@ -77,8 +67,7 @@ export default function Home() {
       } else {
         taxAmount += tax.value;
       }
-    }
-    )
+    })
 
     const finalTotal = totalAfterDiscount + taxAmount;
 
@@ -99,7 +88,6 @@ export default function Home() {
     // So, we need to calculate the total cost of the items shared by each person and then divide by the number of people.
     // We can do this by creating a new object with the name of the person as the key and the total cost of the items shared by that person as the value.
     // Then we can divide each value by the number of people to get the per person cost.
-
 
     const sharedCosts = {};
 
@@ -152,38 +140,6 @@ export default function Home() {
 
     console.log("Shared Costs After Rounding: ", sharedCosts);
 
-    // const sharedCosts = {};
-
-    // console.log("Items: ", items);
-
-    // items.forEach(item => {
-    //   let totalPortion = 0;
-    //   item.sharedBy.forEach(({ portion }) => {
-    //     totalPortion += portion;
-    //   });
-
-    //   item.sharedBy.forEach(({ name, portion }) => {
-    //     if (sharedCosts[name]) {
-    //       sharedCosts[name] += item.cost * (portion / totalPortion);
-    //     } else {
-    //       sharedCosts[name] = item.cost * (portion / totalPortion);
-    //     }
-    //   });
-    // }
-    // )
-
-    // console.log("Shared Costs: ", sharedCosts);
-
-    // const numberOfPeople = names.length;
-    // const perPersonCost = {};
-
-    // names.forEach(name => {
-    //   perPersonCost[name] = sharedCosts[name] / numberOfPeople;
-    // }
-    // )
-
-    // console.log("Per Person Cost: ", perPersonCost);
-
   }
 
 
@@ -199,7 +155,7 @@ export default function Home() {
       setNameInput("")
     } else if (names.includes(trimmedName)) {
       toast.error("Name already exists", {
-        toastId: "nameExistsWarning", // This ensures only one warning for the same name
+        toastId: "nameExistsWarning",
       });
     }
   }
