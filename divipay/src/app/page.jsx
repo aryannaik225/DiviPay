@@ -362,29 +362,29 @@ export default function Home() {
       {showPerPerson && (
         <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 py-10">
           <div className="bg-white dark:bg-[#373c45] rounded-md min-w-[500px] p-6 flex flex-col items-center">
-            <span className="text-2xl poppins-bold">DiviPay - Per Person Summary</span>
+            <span className="text-2xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay - Per Person Summary</span>
 
             {/* Item-wise Cost Breakdown */}
             <div className="w-full mt-6">
-              <span className="poppins-semibold text-lg">Item-wise Breakdown</span>
+              <span className="poppins-semibold text-lg text-[#1f1f1f] dark:text-white">Item-wise Breakdown</span>
               <div className="overflow-x-auto">
                 <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-sm">
                   <thead>
                     <tr className="bg-gray-100 dark:bg-gray-800">
-                      <th className="border border-gray-300 px-4 py-2">Item</th>
+                      <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Item</th>
                       {names.map((name) => (
-                        <th key={name} className="border border-gray-300 px-4 py-2">{name}</th>
+                        <th key={name} className="text-[#1f1f1f] dark:text-white border border-gray-300 px-4 py-2">{name}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {items.map((item, index) => (
                       <tr key={index} className="border border-gray-300">
-                        <td className="border border-gray-300 px-4 py-2">{item.name}</td>
+                        <td className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">{item.name}</td>
                         {names.map((name) => {
                           const share = item.sharedBy.find((p) => p.name === name);
                           return (
-                            <td key={name} className="border border-gray-300 px-4 py-2">
+                            <td key={name} className=" text-[#1f1f1f] dark:text-white border border-gray-300 px-4 py-2">
                               {share ? `${selectedCurrency.symbol}${(share.portion / item.sharedBy.reduce((acc, p) => acc + parseFloat(p.portion), 0) * item.cost).toFixed(2)}` : "-"}
                             </td>
                           );
@@ -398,19 +398,19 @@ export default function Home() {
 
             {/* Final Cost Per Person */}
             <div className="w-full mt-6">
-              <span className="poppins-semibold text-lg">Final Amount Per Person</span>
+              <span className="poppins-semibold text-lg text-[#1f1f1f] dark:text-white">Final Amount Per Person</span>
               <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-sm">
                 <thead>
                   <tr className="bg-gray-100 dark:bg-gray-800">
-                    <th className="border border-gray-300 px-4 py-2">Person</th>
-                    <th className="border border-gray-300 px-4 py-2">Amount Owed</th>
+                    <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Person</th>
+                    <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Amount Owed</th>
                   </tr>
                 </thead>
                 <tbody>
                   {Object.entries(sharedCost).map(([name, amount]) => (
                     <tr key={name} className="border border-gray-300">
-                      <td className="border border-gray-300 px-4 py-2">{name}</td>
-                      <td className="border border-gray-300 px-4 py-2">{selectedCurrency.symbol}{amount.toFixed(2)}</td>
+                      <td className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">{name}</td>
+                      <td className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">{selectedCurrency.symbol}{amount.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -420,18 +420,27 @@ export default function Home() {
             {/* Rounding Off (If Needed) */}
             {selectedCurrency.rounding && (
               <div className="w-full mt-4">
-                <span className="poppins-semibold text-lg">Rounding Adjustment</span>
-                <p className="text-sm">Total rounding difference: {selectedCurrency.symbol}{roundingDifference.toFixed(2)}</p>
+                <span className="poppins-semibold text-lg text-[#1f1f1f] dark:text-white">Rounding Adjustment</span>
+                <p className="text-sm text-[#1f1f1f] dark:text-white">Total rounding difference: {selectedCurrency.symbol}{roundingDifference.toFixed(2)}</p>
               </div>
             )}
 
-            {/* Close Button */}
-            <button 
-              onClick={() => setShowPerPerson(false)} 
-              className="mt-6 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-            >
-              Close
-            </button>
+            <div className="flex justify-center gap-6 w-full mt-6">
+              {/* Show Bill Button */}
+              <button
+                onClick={handleBillShowCase}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
+              >
+                Show Bill
+              </button>
+              {/* Close Button */}
+              <button 
+                onClick={() => setShowPerPerson(false)} 
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
