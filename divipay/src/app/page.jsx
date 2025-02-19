@@ -360,8 +360,8 @@ export default function Home() {
       </div>
 
       {showPerPerson && (
-        <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 py-10">
-          <div className="bg-white dark:bg-[#373c45] rounded-md min-w-[500px] p-6 flex flex-col items-center">
+        <div className="w-screen h-screen overflow-auto fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 py-10">
+          <div className="bg-white dark:bg-[#373c45] rounded-md min-w-[500px] p-6 flex flex-col items-center max-h-[90vh] overflow-auto">
             <span className="text-2xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay - Per Person Summary</span>
 
             {/* Item-wise Cost Breakdown */}
@@ -448,7 +448,7 @@ export default function Home() {
 
       {showBill && (
         <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 py-10">
-          <div className="bg-white dark:bg-[#373c45] rounded-md min-w-[400px] p-6 flex flex-col items-center">
+          <div className="bg-white dark:bg-[#373c45] rounded-md min-w-[400px] p-6 flex flex-col items-center max-h-[90vh] overflow-auto">
             <span className="text-3xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay Bill Summary</span>
 
             {/* Date */}
