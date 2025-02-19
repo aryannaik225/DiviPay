@@ -44,6 +44,7 @@ export default function Home() {
   const [showBill, setShowBill] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showPerPerson, setShowPerPerson] = useState(false);
+  const [sharedCost, setSharedCost] = useState({});
 
 
   const handleCalculation = () => {
@@ -159,6 +160,7 @@ export default function Home() {
     }
 
     console.log("Shared Costs After Rounding: ", sharedCosts);
+    setSharedCost(sharedCosts);
 
     setShowBill(true);
   }
@@ -179,6 +181,16 @@ export default function Home() {
     }
   }
 
+  
+  const handlePerPerson = () => {
+    setShowPerPerson(true);
+    setShowBill(false);
+  }
+
+  const handleBillShowCase = () => {
+    setShowBill(true);
+    setShowPerPerson(false);
+  }
 
 
   const addName = () => {
@@ -349,9 +361,81 @@ export default function Home() {
 
       {showPerPerson && (
         <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 py-10">
+          <div className="bg-white dark:bg-[#373c45] rounded-md min-w-[500px] p-6 flex flex-col items-center">
+            <span className="text-2xl poppins-bold">DiviPay - Per Person Summary</span>
 
+            {/* Item-wise Cost Breakdown */}
+            <div className="w-full mt-6">
+              <span className="poppins-semibold text-lg">Item-wise Breakdown</span>
+              <div className="overflow-x-auto">
+                <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-sm">
+                  <thead>
+                    <tr className="bg-gray-100 dark:bg-gray-800">
+                      <th className="border border-gray-300 px-4 py-2">Item</th>
+                      {names.map((name) => (
+                        <th key={name} className="border border-gray-300 px-4 py-2">{name}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item, index) => (
+                      <tr key={index} className="border border-gray-300">
+                        <td className="border border-gray-300 px-4 py-2">{item.name}</td>
+                        {names.map((name) => {
+                          const share = item.sharedBy.find((p) => p.name === name);
+                          return (
+                            <td key={name} className="border border-gray-300 px-4 py-2">
+                              {share ? `${selectedCurrency.symbol}${(share.portion / item.sharedBy.reduce((acc, p) => acc + parseFloat(p.portion), 0) * item.cost).toFixed(2)}` : "-"}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Final Cost Per Person */}
+            <div className="w-full mt-6">
+              <span className="poppins-semibold text-lg">Final Amount Per Person</span>
+              <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-sm">
+                <thead>
+                  <tr className="bg-gray-100 dark:bg-gray-800">
+                    <th className="border border-gray-300 px-4 py-2">Person</th>
+                    <th className="border border-gray-300 px-4 py-2">Amount Owed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(sharedCost).map(([name, amount]) => (
+                    <tr key={name} className="border border-gray-300">
+                      <td className="border border-gray-300 px-4 py-2">{name}</td>
+                      <td className="border border-gray-300 px-4 py-2">{selectedCurrency.symbol}{amount.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Rounding Off (If Needed) */}
+            {selectedCurrency.rounding && (
+              <div className="w-full mt-4">
+                <span className="poppins-semibold text-lg">Rounding Adjustment</span>
+                <p className="text-sm">Total rounding difference: {selectedCurrency.symbol}{roundingDifference.toFixed(2)}</p>
+              </div>
+            )}
+
+            {/* Close Button */}
+            <button 
+              onClick={() => setShowPerPerson(false)} 
+              className="mt-6 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
+
 
       {showBill && (
         <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 py-10">
@@ -462,7 +546,7 @@ export default function Home() {
               </button>
 
               {/* Get Per Person Summary */}
-              <button onClick={() => setShowPerPerson(true)} className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition">
+              <button onClick={handlePerPerson} className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition">
                 Get Per Person Summary
               </button>
             </div>
