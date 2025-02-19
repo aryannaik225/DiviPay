@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import currencyList from "@/utils/currency.js";
+import { format, set } from "date-fns";
 
 export default function Home() {
 
@@ -33,6 +34,17 @@ export default function Home() {
   const [selectedCurrency, setSelectedCurrency] = useState({ name: "Indian Rupee", symbol: "₹" });
   const dropdownRef = useRef(null);
 
+  const [finalTotal, setFinalTotal] = useState(0);
+  const [roundingDifference, setRoundingDifference] = useState(0);
+  const [roundoffTotal, setRoundoffTotal] = useState(0);
+  const [totalDiscount, setTotalDiscount] = useState(0);
+  const [totalAfterDisc, setTotalAfterDisc] = useState(0);
+  const [totalTax, setTotalTax] = useState(0);
+
+  const [showBill, setShowBill] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [showPerPerson, setShowPerPerson] = useState(false);
+
 
   const handleCalculation = () => {
 
@@ -59,7 +71,10 @@ export default function Home() {
       }
     })
 
+    setTotalDiscount(discountAmount);
+
     const totalAfterDiscount = totalCost - discountAmount;
+    setTotalAfterDisc(totalAfterDiscount);
 
     taxes.forEach(tax => {
       if (tax.symbol === "%") {
@@ -69,17 +84,22 @@ export default function Home() {
       }
     })
 
-    const finalTotal = totalAfterDiscount + taxAmount;
+    setTotalTax(taxAmount);
+
+    const finalTotall = totalAfterDiscount + taxAmount;
+    setFinalTotal(finalTotall);
 
     console.log("Total Cost: ", totalCost);
     console.log("Total Discount: ", discountAmount);
     console.log("Total After Discount: ", totalAfterDiscount);
     console.log("Total Tax: ", taxAmount);
-    console.log("Final Total: ", finalTotal);
+    console.log("Final Total: ", finalTotall);
 
     if (selectedCurrency.rounding === true) {
-      const newTotal = Math.round(finalTotal);
-      const roundingDifference = newTotal - finalTotal;
+      const newTotal = Math.round(finalTotall);
+      setRoundoffTotal(newTotal);
+      const roundingDifference = newTotal - finalTotall;
+      setRoundingDifference(roundingDifference);
       console.log("Rounding Difference: ", roundingDifference);
       console.log("New Total: ", newTotal);
     }
@@ -140,6 +160,7 @@ export default function Home() {
 
     console.log("Shared Costs After Rounding: ", sharedCosts);
 
+    setShowBill(true);
   }
 
 
@@ -147,6 +168,18 @@ export default function Home() {
     const savedTheme = localStorage.getItem("theme") || "light";
     setTheme(savedTheme);
   }, []);
+
+
+
+  const calculateTax = (tax) => {
+    if (tax.symbol === "%") {
+      return (tax.value / 100) * totalAfterDisc;
+    } else {
+      return tax.value;
+    }
+  }
+
+
 
   const addName = () => {
     const trimmedName = nameInput.trim();
@@ -313,6 +346,130 @@ export default function Home() {
           <ThemeToggle theme={theme} setTheme={setTheme}/>
         </div>
       </div>
+
+      {showPerPerson && (
+        <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 py-10">
+
+        </div>
+      )}
+
+      {showBill && (
+        <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 py-10">
+          <div className="bg-white dark:bg-[#373c45] rounded-md min-w-[400px] p-6 flex flex-col items-center">
+            <span className="text-3xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay Bill Summary</span>
+
+            {/* Date */}
+            <div className="w-full mt-4 flex justify-center">
+              <span className="poppins-regular text-sm text-[#1f1f1f] dark:text-white">
+                📅 Date: <span>{format(currentDate, "dd/MM/yyyy")}</span>
+              </span>
+            </div>
+
+            {/* Divider */}
+            <div className="w-full mt-6 flex items-center gap-2">
+              <div className="w-full border-t border-[#1f1f1f] dark:border-white border-dashed" />
+              <span className="poppins-regular text-nowrap text-[#1f1f1f] dark:text-white">Tax Invoice</span>
+              <div className="w-full border-t border-[#1f1f1f] dark:border-white border-dashed" />
+            </div>
+
+            {/* Currency */}
+            <div className="w-full mt-4 text-center">
+              <span className="poppins-medium text-lg text-[#1f1f1f] dark:text-white">
+                {selectedCurrency.symbol} {selectedCurrency.name}
+              </span>
+            </div>
+
+            {/* Bill Items */}
+            <div className="w-full mt-4 border-b">
+              {items.map((item, index) => (
+                <div key={index} className="flex justify-between py-2">
+                  <span className="poppins-regular text-[#1f1f1f] dark:text-white">{item.name} (x{item.quantity})</span>
+                  <span className="poppins-regular text-[#1f1f1f] dark:text-white">
+                    {selectedCurrency.symbol} {item.cost.toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Discounts */}
+            {discounts.length > 0 && (
+              <div className="w-full mt-4">
+                {discounts.map((discount, index) => (
+                  <div key={index} className="flex justify-between text-green-500">
+                    <span className="poppins-regular">Discount {discount.symbol === "%" ? `(${discount.value}%)` : ""}</span>
+                    <span className="poppins-regular">
+                      -{selectedCurrency.symbol} {totalDiscount.toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Taxes */}
+            {taxes.length > 0 && (
+              <div className="w-full mt-2">
+                {taxes.map((tax, index) => (
+                  <div key={index} className="flex justify-between text-red-500">
+                    <span className="poppins-regular">{tax.name} {tax.symbol === "%" ? `(${tax.value}%)` : ""}</span>
+                    <span className="poppins-regular">
+                      +{selectedCurrency.symbol} {calculateTax(tax).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Final Amount */}
+            <div className={`w-full ${selectedCurrency.rounding ? 'mt-2' : 'mt-4'} flex justify-between text-xl font-bold`}>
+              <span className="poppins-bold text-base text-[#1f1f1f] dark:text-white">Total:</span>
+              <span className="poppins-bold text-base text-[#1f1f1f] dark:text-white">
+                {selectedCurrency.symbol} {finalTotal.toFixed(2)}
+              </span>
+            </div>
+
+            {/* Rounding */}
+            {selectedCurrency.rounding && (
+              <div className="w-full flex justify-between text-lg">
+                <span className="poppins-regular text-sm text-[#1f1f1f] dark:text-white">Rounding:</span>
+                <span className="poppins-regular text-sm text-[#1f1f1f] dark:text-white">
+                  {selectedCurrency.symbol} {roundingDifference.toFixed(2)}
+                </span>
+              </div>
+            )}
+
+            {selectedCurrency.rounding && (
+              <div className="w-full mt-2 border-t border-[#1f1f1f] dark:border-white border-dashed"/>
+            )}
+
+            {/* Roundoff Total */}
+            {selectedCurrency.rounding && (
+              <div className="w-full mt-2 flex justify-between text-xl font-bold">
+                <span className="poppins-bold text-[#1f1f1f] dark:text-white">Roundoff Total:</span>
+                <span className="poppins-bold text-[#1f1f1f] dark:text-white">
+                  {selectedCurrency.symbol} {roundoffTotal.toFixed(0)}
+                </span>
+              </div>
+            )}
+
+
+            <div className="flex justify-center gap-6 w-full mt-6">
+              {/* Close Button */}
+              <button
+                onClick={() => setShowBill(false)}
+                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition"
+              >
+                Close
+              </button>
+
+              {/* Get Per Person Summary */}
+              <button onClick={() => setShowPerPerson(true)} className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition">
+                Get Per Person Summary
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       <h2 className="text-2xl poppins-bold text-[#1f1f1f] dark:text-white mb-10 underline">Split Expenses</h2>
 
@@ -499,7 +656,7 @@ export default function Home() {
           <button
             type="button"
             onClick={addDiscount}
-            className="mt-2 p-2 w-full bg-[#e5e5e5] dark:bg-[#2f2f2f] dark:hover:bg-[#1f1f1f] text-white rounded"
+            className="mt-2 p-2 w-full bg-[#e5e5e5] dark:bg-[#2f2f2f] dark:hover:bg-[#1f1f1f] text-[#1f1f1f] dark:text-white rounded poppins-regular"
           >
             Add Discount
           </button>
@@ -557,7 +714,7 @@ export default function Home() {
           <button
             type="button"
             onClick={addTax}
-            className="mt-2 p-2 w-full bg-[#e5e5e5] dark:bg-[#2f2f2f] dark:hover:bg-[#1f1f1f] text-white rounded"
+            className="mt-2 p-2 w-full bg-[#e5e5e5] dark:bg-[#2f2f2f] dark:hover:bg-[#1f1f1f] text-[#1f1f1f] dark:text-white rounded poppins-regular"
           >
             Add Tax
           </button>
