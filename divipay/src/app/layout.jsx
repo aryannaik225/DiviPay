@@ -32,7 +32,7 @@ export default function RootLayout({ children }) {
       >
         {children}
         <ServiceWorkerRegister />
-        <PWAInstallPrompt />
+        {/* <PWAInstallPrompt /> */}
       </body>
     </html>
   );
