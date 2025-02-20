@@ -349,7 +349,7 @@ export default function Home() {
   return (
     <div className="bg-[#ffffff] dark:bg-[#0f0f0f] flex flex-col items-center justify-start min-h-screen py-10">
       <ToastContainer />
-      <div className="flex justify-between items-center mb-10 w-[500px]">
+      <div className="flex justify-between items-center mb-10 w-full max-w-[90vw] sm:max-w-[400px] md:max-w-[500px]">
         <div className="flex items-center gap-2">
           <Image src="/logo.svg" alt="DiviPay" width={30} height={30} />
           <h1 className="text-2xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay</h1>
@@ -360,31 +360,35 @@ export default function Home() {
       </div>
 
       {showPerPerson && (
-        <div className="w-screen h-screen overflow-auto fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 py-10">
-          <div className="bg-white dark:bg-[#373c45] rounded-md min-w-[500px] p-6 flex flex-col items-center max-h-[90vh] overflow-auto">
-            <span className="text-2xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay - Per Person Summary</span>
+        <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 px-4 sm:px-6 py-10">
+          <div className="bg-white dark:bg-[#373c45] rounded-md min-w-[90%] md:min-w-[500px] max-w-[95%] md:max-w-[700px] max-h-[80vh] overflow-auto p-4 sm:p-6 flex flex-col items-center">
+            <span className="text-lg sm:text-2xl poppins-bold text-[#1f1f1f] dark:text-white text-center">
+              DiviPay - Per Person Summary
+            </span>
 
             {/* Item-wise Cost Breakdown */}
             <div className="w-full mt-6">
-              <span className="poppins-semibold text-lg text-[#1f1f1f] dark:text-white">Item-wise Breakdown</span>
+              <span className="poppins-semibold text-base sm:text-lg text-[#1f1f1f] dark:text-white">
+                Item-wise Breakdown
+              </span>
               <div className="overflow-x-auto">
-                <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-sm">
+                <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-xs sm:text-sm">
                   <thead>
                     <tr className="bg-gray-100 dark:bg-gray-800">
-                      <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Item</th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Item</th>
                       {names.map((name) => (
-                        <th key={name} className="text-[#1f1f1f] dark:text-white border border-gray-300 px-4 py-2">{name}</th>
+                        <th key={name} className="text-[#1f1f1f] dark:text-white border border-gray-300 px-2 sm:px-4 py-2">{name}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {items.map((item, index) => (
                       <tr key={index} className="border border-gray-300">
-                        <td className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">{item.name}</td>
+                        <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">{item.name}</td>
                         {names.map((name) => {
                           const share = item.sharedBy.find((p) => p.name === name);
                           return (
-                            <td key={name} className=" text-[#1f1f1f] dark:text-white border border-gray-300 px-4 py-2">
+                            <td key={name} className="text-[#1f1f1f] dark:text-white border border-gray-300 px-2 sm:px-4 py-2">
                               {share ? `${selectedCurrency.symbol}${(share.portion / item.sharedBy.reduce((acc, p) => acc + parseFloat(p.portion), 0) * item.cost).toFixed(2)}` : "-"}
                             </td>
                           );
@@ -398,45 +402,54 @@ export default function Home() {
 
             {/* Final Cost Per Person */}
             <div className="w-full mt-6">
-              <span className="poppins-semibold text-lg text-[#1f1f1f] dark:text-white">Final Amount Per Person</span>
-              <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-sm">
-                <thead>
-                  <tr className="bg-gray-100 dark:bg-gray-800">
-                    <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Person</th>
-                    <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Amount Owed</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(sharedCost).map(([name, amount]) => (
-                    <tr key={name} className="border border-gray-300">
-                      <td className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">{name}</td>
-                      <td className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">{selectedCurrency.symbol}{amount.toFixed(2)}</td>
+              <span className="poppins-semibold text-base sm:text-lg text-[#1f1f1f] dark:text-white">
+                Final Amount Per Person
+              </span>
+              <div className="overflow-x-auto">
+                <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-xs sm:text-sm">
+                  <thead>
+                    <tr className="bg-gray-100 dark:bg-gray-800">
+                      <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Person</th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Amount Owed</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {Object.entries(sharedCost).map(([name, amount]) => (
+                      <tr key={name} className="border border-gray-300">
+                        <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">{name}</td>
+                        <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">{selectedCurrency.symbol}{amount.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Rounding Off (If Needed) */}
             {selectedCurrency.rounding && (
               <div className="w-full mt-4">
-                <span className="poppins-semibold text-lg text-[#1f1f1f] dark:text-white">Rounding Adjustment</span>
-                <p className="text-sm text-[#1f1f1f] dark:text-white">Total rounding difference: {selectedCurrency.symbol}{roundingDifference.toFixed(2)}</p>
+                <span className="poppins-semibold text-base sm:text-lg text-[#1f1f1f] dark:text-white">
+                  Rounding Adjustment
+                </span>
+                <p className="text-sm text-[#1f1f1f] dark:text-white">
+                  Total rounding difference: {selectedCurrency.symbol}{roundingDifference.toFixed(2)}
+                </p>
               </div>
             )}
 
-            <div className="flex justify-center gap-6 w-full mt-6">
+            {/* Buttons */}
+            <div className="flex justify-center gap-4 sm:gap-6 w-full mt-6">
               {/* Show Bill Button */}
               <button
                 onClick={handleBillShowCase}
-                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
+                className="bg-blue-500 text-white text-sm sm:text-base px-3 sm:px-4 py-2 rounded-md hover:bg-blue-600 transition"
               >
                 Show Bill
               </button>
               {/* Close Button */}
               <button 
                 onClick={() => setShowPerPerson(false)} 
-                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                className="px-3 sm:px-4 py-2 bg-red-500 text-white text-sm sm:text-base rounded-md hover:bg-red-600"
               >
                 Close
               </button>
@@ -446,10 +459,11 @@ export default function Home() {
       )}
 
 
+
       {showBill && (
         <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 py-10">
-          <div className="bg-white dark:bg-[#373c45] rounded-md min-w-[400px] p-6 flex flex-col items-center max-h-[90vh] overflow-auto">
-            <span className="text-3xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay Bill Summary</span>
+          <div className="bg-white dark:bg-[#373c45] rounded-md sm:min-w-[400px] max-w-[90vw] p-6 flex flex-col items-center max-h-[90vh] overflow-auto">
+            <span className="text-xl sm:text-3xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay Bill Summary</span>
 
             {/* Date */}
             <div className="w-full mt-4 flex justify-center">
@@ -476,8 +490,8 @@ export default function Home() {
             <div className="w-full mt-4 border-b">
               {items.map((item, index) => (
                 <div key={index} className="flex justify-between py-2">
-                  <span className="poppins-regular text-[#1f1f1f] dark:text-white">{item.name} (x{item.quantity})</span>
-                  <span className="poppins-regular text-[#1f1f1f] dark:text-white">
+                  <span className="poppins-regular text-[#1f1f1f] dark:text-white truncate">{item.name} (x{item.quantity})</span>
+                  <span className="poppins-regular text-[#1f1f1f] dark:text-white text-nowrap">
                     {selectedCurrency.symbol} {item.cost.toFixed(2)}
                   </span>
                 </div>
@@ -503,8 +517,8 @@ export default function Home() {
               <div className="w-full mt-2">
                 {taxes.map((tax, index) => (
                   <div key={index} className="flex justify-between text-red-500">
-                    <span className="poppins-regular">{tax.name} {tax.symbol === "%" ? `(${tax.value}%)` : ""}</span>
-                    <span className="poppins-regular">
+                    <span className="poppins-regular truncate">{tax.name} {tax.symbol === "%" ? `(${tax.value}%)` : ""}</span>
+                    <span className="poppins-regular text-nowrap">
                       +{selectedCurrency.symbol} {calculateTax(tax).toFixed(2)}
                     </span>
                   </div>
@@ -536,7 +550,7 @@ export default function Home() {
 
             {/* Roundoff Total */}
             {selectedCurrency.rounding && (
-              <div className="w-full mt-2 flex justify-between text-xl font-bold">
+              <div className="w-full mt-2 flex justify-between text-lg sm:text-xl font-bold">
                 <span className="poppins-bold text-[#1f1f1f] dark:text-white">Roundoff Total:</span>
                 <span className="poppins-bold text-[#1f1f1f] dark:text-white">
                   {selectedCurrency.symbol} {roundoffTotal.toFixed(0)}
@@ -549,13 +563,13 @@ export default function Home() {
               {/* Close Button */}
               <button
                 onClick={() => setShowBill(false)}
-                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition"
+                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition text-xs sm:text-base"
               >
                 Close
               </button>
 
               {/* Get Per Person Summary */}
-              <button onClick={handlePerPerson} className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition">
+              <button onClick={handlePerPerson} className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition text-xs sm:text-base">
                 Get Per Person Summary
               </button>
             </div>
@@ -564,9 +578,9 @@ export default function Home() {
       )}
 
 
-      <h2 className="text-2xl poppins-bold text-[#1f1f1f] dark:text-white mb-10 underline">Split Expenses</h2>
+      <h2 className="text-xl md:text-2xl poppins-bold text-[#1f1f1f] dark:text-white mb-10 underline">Split Expenses</h2>
 
-      <form onSubmit={handleSubmit} className="w-[400px] flex flex-col">
+      <form onSubmit={handleSubmit} className="w-full max-w-[90vw] sm:max-w-[400px] flex flex-col">
 
         {/* Name Input */}
         <div className="mb-10">
@@ -596,7 +610,7 @@ export default function Home() {
                 key={index}
                 className="flex items-center p-3 bg-[#d9d9d9] dark:bg-gray-700 rounded"
               >
-                <span className="text-[#1f1f1f] dark:text-white poppins-medium">{name}</span>
+                <span className="text-[#1f1f1f] dark:text-white poppins-medium truncate">{name}</span>
                 <button
                   type="button"
                   onClick={() => removeName(name)}
@@ -622,11 +636,11 @@ export default function Home() {
             onChange={handleCurrencyInputChange}
             onFocus={() => setShowDropdown(true)}
             placeholder="Type or select a currency"
-            className="w-full p-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular"
+            className="w-full p-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular truncate"
           />
 
           {showDropdown && (
-            <ul className="absolute w-[400px] mt-1 max-h-40 overflow-auto bg-[#e5e5e5] dark:bg-[#2f2f2f] rounded shadow-lg">
+            <ul className="absolute w-full max-w-[90vw] sm:max-w-[400px] border border-[#1f1f1f] dark:border-white mt-1 max-h-40 overflow-auto bg-[#e5e5e5] dark:bg-[#2f2f2f] rounded shadow-lg">
               {filteredCurrencies.length > 0 ? (
                 filteredCurrencies.map((currency, index) => (
                   <li
@@ -664,7 +678,7 @@ export default function Home() {
               onChange={(e) => setQuantityInput(e.target.value)}
               placeholder="Quantity"
               min="1"
-              className="w-2/6 p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular"
+              className="w-[45%] sm:w-2/6 p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular"
             />
           </div>
           <input 
@@ -681,7 +695,7 @@ export default function Home() {
                   <button
                   type="button"
                   onClick={() => handleNameSelect(name)}
-                  className={`px-4 py-2 rounded-md transition-colors duration-300 ${selectedNames.includes(name) ? 'bg-blue-400 text-white' : 'bg-[#d9d9d9] dark:bg-[#374151] text-[#1f1f1f] dark:text-white hover:bg-blue-400 dark:hover:bg-blue-400'}`}
+                  className={`px-4 py-2 rounded-md transition-colors duration-300 truncate ${selectedNames.includes(name) ? 'bg-blue-400 text-white' : 'bg-[#d9d9d9] dark:bg-[#374151] text-[#1f1f1f] dark:text-white hover:bg-blue-400 dark:hover:bg-blue-400'}`}
                 >
                   {name}
                 </button>
