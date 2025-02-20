@@ -1,11 +1,11 @@
 {
   "name": "DiviPay",
   "short_name": "DiviPay",
-  "description": "An app to simplify expense distribution among friends.",
+  "description": "Easily split and manage expenses among friends.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "theme_color": "#1f1f1f",
   "icons": [
     {
       "src": "/icon-192x192.png",
