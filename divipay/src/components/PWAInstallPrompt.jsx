@@ -20,7 +20,7 @@ export default function PWAInstallPrompt() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 bg-white p-3 shadow-lg rounded-lg text-center z-50">
-      <p className="text-sm">
+      <p className="text-sm text-black">
         Install DiviPay: Tap <strong>Share</strong> and then <strong>Add to Home Screen</strong>.
       </p>
       <button className="mt-2 bg-blue-500 text-white px-3 py-1 rounded" onClick={() => setShowPrompt(false)}>
