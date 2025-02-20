@@ -7,6 +7,8 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import currencyList from "@/utils/currency.js";
 import { format, set } from "date-fns";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 
 export default function Home() {
 
@@ -45,6 +47,173 @@ export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showPerPerson, setShowPerPerson] = useState(false);
   const [sharedCost, setSharedCost] = useState({});
+
+  // Temporary states for making the divs for downloading the bill and per person summary
+  const [showBillDiv, setShowBillDiv] = useState(false);
+  const [showPerPersonDiv, setShowPerPersonDiv] = useState(false);
+
+
+  const tempFunction = () => {
+    console.log(document.getElementById("bill-container"))
+  }
+
+  // Functions to handle the downloads
+  
+  const downloadBillAsPNG = async () => {
+    setShowBillDiv(true)
+    
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    const billElement = document.getElementById("bill-container")
+
+    if (!billElement) {
+      toast.error("No bill to download", {
+        toastId: "noBillWarning",
+      });
+      return;
+    }
+
+    const canvas = await html2canvas(billElement, { scale: 2 })
+    const link = document.createElement("a")
+    link.href = canvas.toDataURL('image/png')
+    link.download = "DiviPay_Bill.png"
+    link.click()
+
+    setShowBillDiv(false)
+  }
+
+  const downloadBillAsPDF = async () => {
+    setShowBillDiv(true);
+  
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  
+    const billElement = document.getElementById("bill-container");
+  
+    if (!billElement) {
+      toast.error("No bill to download", { toastId: "noBillWarning" });
+      return;
+    }
+  
+    const canvas = await html2canvas(billElement, { scale: 2 });
+  
+    const imgData = canvas.toDataURL("image/png");
+  
+    const pdf = new jsPDF("p", "mm", "a4");
+    const imgWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
+    const imgHeight = (canvas.height * imgWidth) / canvas.width; // Scale height proportionally
+  
+    let yPosition = 0;
+  
+    // If the image height fits in one page, just add it normally
+    if (imgHeight <= pageHeight) {
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+    } else {
+      // Handle multi-page PDF
+      let remainingHeight = imgHeight;
+      let pageOffset = 0;
+  
+      while (remainingHeight > 0) {
+        const sliceHeight = Math.min(remainingHeight, pageHeight);
+  
+        const canvasSlice = document.createElement("canvas");
+        canvasSlice.width = canvas.width;
+        canvasSlice.height = (sliceHeight * canvas.width) / imgWidth;
+  
+        const ctx = canvasSlice.getContext("2d");
+        ctx.drawImage(
+          canvas,
+          0,
+          pageOffset * (canvas.height / imgHeight),
+          canvas.width,
+          canvasSlice.height,
+          0,
+          0,
+          canvasSlice.width,
+          canvasSlice.height
+        );
+  
+        const slicedImgData = canvasSlice.toDataURL("image/png");
+  
+        pdf.addImage(slicedImgData, "PNG", 0, 0, imgWidth, sliceHeight);
+  
+        remainingHeight -= sliceHeight;
+        pageOffset += sliceHeight;
+  
+        if (remainingHeight > 0) {
+          pdf.addPage();
+        }
+      }
+    }
+  
+    pdf.save("DiviPay_Bill.pdf");
+    setShowBillDiv(false);
+  };
+  
+  
+
+  const downloadPerPersonAsPNG = async () => {
+    setShowPerPersonDiv(true)
+
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    const perPersonElement = document.getElementById("perPerson-container")
+
+    if (!perPersonElement) {
+      toast.error("No per person summary to download", {
+        toastId: "noPerPersonWarning",
+      });
+      return;
+    }
+
+    const canvas = await html2canvas(perPersonElement, { scale: 2 })
+    const link = document.createElement("a")
+    link.href = canvas.toDataURL('image/png')
+    link.download = "DiviPay_Per_Person.png"
+    link.click()
+
+    setShowPerPersonDiv(false)
+  }
+
+  const downloadPerPersonAsPDF = async () => {
+
+    setShowPerPersonDiv(true)
+
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    const perPersonElement = document.getElementById("perPerson-container")
+
+    if (!perPersonElement) {
+      toast.error("No per person summary to download", {
+        toastId: "noPerPersonWarning",
+      });
+      return;
+    }
+
+    const canvas = await html2canvas(perPersonElement, { scale: 2 })
+    const imgData = canvas.toDataURL('image/png')
+
+    const pdf = new jsPDF("p", "mm", "a4")
+    const imgWidth = 210
+    const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+    let yPosition = 10
+    let remainingHeight = imgHeight
+
+    while (remainingHeight > 0) {
+      pdf.addImage(imgData, "PNG", 0, yPosition, imgWidth, imgHeight)
+      remainingHeight -= 297
+
+      if (remainingHeight > 0) {
+        pdf.addPage()
+        yPosition = 0
+      }
+    }
+
+    pdf.save("DiviPay_Per_Person.pdf")
+
+    setShowPerPersonDiv(false)
+  }
 
 
   const handleCalculation = () => {
@@ -454,6 +623,25 @@ export default function Home() {
                 Close
               </button>
             </div>
+
+            {/* Download Buttons */}
+            <div className="flex justify-center gap-4 sm:gap-6 w-full mt-6">
+              {/* Download as PNG */}
+              <button
+                onClick={downloadPerPersonAsPNG}
+                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition text-xs sm:text-base"
+              >
+                Download as PNG
+              </button>
+
+              {/* Download as PDF */}
+              <button
+                onClick={downloadPerPersonAsPDF}
+                className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition text-xs sm:text-base"
+              >
+                Download as PDF
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -571,6 +759,24 @@ export default function Home() {
               {/* Get Per Person Summary */}
               <button onClick={handlePerPerson} className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition text-xs sm:text-base">
                 Get Per Person Summary
+              </button>
+            </div>
+
+            <div className="flex justify-center gap-6 w-full mt-6">
+              {/* Download as PNG */}
+              <button
+                onClick={downloadBillAsPNG}
+                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition text-xs sm:text-base"
+              >
+                Download as PNG
+              </button>
+              
+              {/* Download as PDF */}
+              <button
+                onClick={downloadBillAsPDF}
+                className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition text-xs sm:text-base"
+              >
+                Download as PDF
               </button>
             </div>
           </div>
@@ -854,6 +1060,200 @@ export default function Home() {
         </button>
 
       </form>
+      
+
+      {showBillDiv && (
+        <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-0 py-10">
+          <div id="bill-container" className="bg-white dark:bg-[#373c45] min-w-400px max-w-[1900px] p-6 flex flex-col items-center ">
+            <span className="text-3xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay Bill Summary</span>
+
+            {/* <button onClick={() => setShowBillDiv(false)}>
+              Lci
+            </button> */}
+
+            {/* Date */}
+            <div className="w-full mt-4 flex justify-center">
+              <span className="poppins-regular text-sm text-[#1f1f1f] dark:text-white">
+                📅 Date: <span>{format(currentDate, "dd/MM/yyyy")}</span>
+              </span>
+            </div>
+
+            {/* Divider */}
+            <div className="w-full mt-6 flex items-center gap-2">
+              <div className="w-full border-t border-[#1f1f1f] dark:border-white border-dashed" />
+              <span className="poppins-regular text-nowrap text-[#1f1f1f] dark:text-white">Tax Invoice</span>
+              <div className="w-full border-t border-[#1f1f1f] dark:border-white border-dashed" />
+            </div>
+
+            {/* Currency */}
+            <div className="w-full mt-4 text-center">
+              <span className="poppins-medium text-lg text-[#1f1f1f] dark:text-white">
+                {selectedCurrency.symbol} {selectedCurrency.name}
+              </span>
+            </div>
+
+            {/* Bill Items */}
+            <div className="w-full mt-4 border-b">
+              {items.map((item, index) => (
+                <div key={index} className="flex justify-between py-2">
+                  <span className="poppins-regular text-[#1f1f1f] dark:text-white truncate line-heig">{item.name} (x{item.quantity})</span>
+                  <span className="poppins-regular text-[#1f1f1f] dark:text-white text-nowrap">
+                    {selectedCurrency.symbol} {item.cost.toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Discounts */}
+            {discounts.length > 0 && (
+              <div className="w-full mt-4">
+                {discounts.map((discount, index) => (
+                  <div key={index} className="flex justify-between text-green-500">
+                    <span className="poppins-regular">Discount {discount.symbol === "%" ? `(${discount.value}%)` : ""}</span>
+                    <span className="poppins-regular">
+                      -{selectedCurrency.symbol} {totalDiscount.toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Taxes */}
+            {taxes.length > 0 && (
+              <div className="w-full mt-2">
+                {taxes.map((tax, index) => (
+                  <div key={index} className="flex justify-between text-red-500">
+                    <span className="poppins-regular truncate line-heig">{tax.name} {tax.symbol === "%" ? `(${tax.value}%)` : ""}</span>
+                    <span className="poppins-regular text-nowrap">
+                      +{selectedCurrency.symbol} {calculateTax(tax).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Final Amount */}
+            <div className={`w-full ${selectedCurrency.rounding ? 'mt-2' : 'mt-4'} flex justify-between text-xl font-bold`}>
+              <span className="poppins-bold text-base text-[#1f1f1f] dark:text-white">Total:</span>
+              <span className="poppins-bold text-base text-[#1f1f1f] dark:text-white">
+                {selectedCurrency.symbol} {finalTotal.toFixed(2)}
+              </span>
+            </div>
+
+            {/* Rounding */}
+            {selectedCurrency.rounding && (
+              <div className="w-full flex justify-between text-lg">
+                <span className="poppins-regular text-sm text-[#1f1f1f] dark:text-white">Rounding:</span>
+                <span className="poppins-regular text-sm text-[#1f1f1f] dark:text-white">
+                  {selectedCurrency.symbol} {roundingDifference.toFixed(2)}
+                </span>
+              </div>
+            )}
+
+            {selectedCurrency.rounding && (
+              <div className="w-full mt-2 border-t border-[#1f1f1f] dark:border-white border-dashed"/>
+            )}
+
+            {/* Roundoff Total */}
+            {selectedCurrency.rounding && (
+              <div className="w-full mt-2 flex justify-between text-xl font-bold">
+                <span className="poppins-bold text-[#1f1f1f] dark:text-white">Roundoff Total:</span>
+                <span className="poppins-bold text-[#1f1f1f] dark:text-white">
+                  {selectedCurrency.symbol} {roundoffTotal.toFixed(0)}
+                </span>
+              </div>
+            )}
+
+
+            <div className="py-2">
+
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {showPerPersonDiv && (
+        <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-0 px-4 sm:px-6 py-10">
+          <div id="perPerson-container" className="bg-white dark:bg-[#373c45] max-w-[1900px] min-w-[700px] overflow-visible p-6 flex flex-col items-center">
+            <span className="text-2xl poppins-bold text-[#1f1f1f] dark:text-white text-center">
+              DiviPay - Per Person Summary
+            </span>
+
+            {/* Item-wise Cost Breakdown */}
+            <div className="w-full mt-6">
+              <span className="poppins-semibold text-lg text-[#1f1f1f] dark:text-white">
+                Item-wise Breakdown
+              </span>
+              <div className="overflow-x-auto">
+                <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-sm">
+                  <thead>
+                    <tr className="bg-gray-100 dark:bg-gray-800">
+                      <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Item</th>
+                      {names.map((name) => (
+                        <th key={name} className="text-[#1f1f1f] dark:text-white border border-gray-300 px-4 py-2">{name}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item, index) => (
+                      <tr key={index} className="border border-gray-300">
+                        <td className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">{item.name}</td>
+                        {names.map((name) => {
+                          const share = item.sharedBy.find((p) => p.name === name);
+                          return (
+                            <td key={name} className="text-[#1f1f1f] dark:text-white border border-gray-300 px-4 py-2">
+                              {share ? `${selectedCurrency.symbol}${(share.portion / item.sharedBy.reduce((acc, p) => acc + parseFloat(p.portion), 0) * item.cost).toFixed(2)}` : "-"}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Final Cost Per Person */}
+            <div className="w-full mt-6">
+              <span className="poppins-semibold text-lg text-[#1f1f1f] dark:text-white">
+                Final Amount Per Person
+              </span>
+              <div className="overflow-x-auto">
+                <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-sm">
+                  <thead>
+                    <tr className="bg-gray-100 dark:bg-gray-800">
+                      <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Person</th>
+                      <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Amount Owed</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(sharedCost).map(([name, amount]) => (
+                      <tr key={name} className="border border-gray-300">
+                        <td className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">{name}</td>
+                        <td className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">{selectedCurrency.symbol}{amount.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Rounding Off (If Needed) */}
+            {selectedCurrency.rounding && (
+              <div className="w-full mt-4">
+                <span className="poppins-semibold text-lg text-[#1f1f1f] dark:text-white">
+                  Rounding Adjustment
+                </span>
+                <p className="text-sm text-[#1f1f1f] dark:text-white">
+                  Total rounding difference: {selectedCurrency.symbol}{roundingDifference.toFixed(2)}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
 
     </div>
   );
