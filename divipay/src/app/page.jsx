@@ -525,8 +525,8 @@ export default function Home() {
     <div className="bg-[#ffffff] dark:bg-[#0f0f0f] flex flex-col items-center justify-start min-h-screen py-10">
       <ToastContainer />
       <div className="flex justify-between items-center mb-10 w-full max-w-[90vw] sm:max-w-[400px] md:max-w-[500px]">
-        <div className="flex items-center gap-2">
-          <Image src="/logo.svg" alt="DiviPay" width={30} height={30} />
+        <div className="flex items-center gap-2 select-none cursor-pointer">
+          <Image src="/logo.svg" alt="DiviPay" width={30} height={30} draggable="false" className="select-none"/>
           <h1 className="text-2xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay</h1>
         </div>
         <div className="hover:bg-gray-600 transition-colors duration-300 ease-out p-0 rounded-lg">
@@ -1260,7 +1260,17 @@ export default function Home() {
         </div>
       )}
 
-
+      <div className="mt-10 w-full flex justify-center">
+        <div>
+          <span className="text-[#1f1f1f] dark:text-white poppins-medium" draggable="false">Made with ❤️ by </span>
+          <a
+            href="https://www.github.com/aryannaik225"
+            className="text-blue-500 hover:underline poppins-medium"
+          >
+            Aryan Naik
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
