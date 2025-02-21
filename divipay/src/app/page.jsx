@@ -9,6 +9,7 @@ import currencyList from "@/utils/currency.js";
 import { format, set } from "date-fns";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import { motion, AnimatePresence } from "motion/react"
 
 export default function Home() {
 
@@ -535,271 +536,316 @@ export default function Home() {
       </div>
 
       {showPerPerson && (
-        <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 px-4 sm:px-6 py-10">
-          <div className="bg-white dark:bg-[#373c45] rounded-md min-w-[90%] md:min-w-[500px] max-w-[95%] md:max-w-[700px] max-h-[80vh] overflow-auto p-4 sm:p-6 flex flex-col items-center">
-            <span className="text-lg sm:text-2xl poppins-bold text-[#1f1f1f] dark:text-white text-center">
-              DiviPay - Per Person Summary
-            </span>
-
-            {/* Item-wise Cost Breakdown */}
-            <div className="w-full mt-6">
-              <span className="poppins-semibold text-base sm:text-lg text-[#1f1f1f] dark:text-white">
-                Item-wise Breakdown
+        <AnimatePresence>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 px-4 sm:px-6 py-10"
+          >
+            <motion.div 
+              initial={{ y: 50, scale: 0.9, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              exit={{ y: 50, scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="bg-white dark:bg-[#373c45] rounded-md min-w-[90%] md:min-w-[500px] max-w-[95%] md:max-w-[700px] max-h-[80vh] overflow-auto p-4 sm:p-6 flex flex-col items-center"
+            >
+              <span className="text-lg sm:text-2xl poppins-bold text-[#1f1f1f] dark:text-white text-center">
+                DiviPay - Per Person Summary
               </span>
-              <div className="overflow-x-auto">
-                <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-xs sm:text-sm">
-                  <thead>
-                    <tr className="bg-gray-100 dark:bg-gray-800">
-                      <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Item</th>
-                      {names.map((name) => (
-                        <th key={name} className="text-[#1f1f1f] dark:text-white border border-gray-300 px-2 sm:px-4 py-2">{name}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item, index) => (
-                      <tr key={index} className="border border-gray-300">
-                        <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">{item.name}</td>
-                        {names.map((name) => {
-                          const share = item.sharedBy.find((p) => p.name === name);
-                          return (
-                            <td key={name} className="text-[#1f1f1f] dark:text-white border border-gray-300 px-2 sm:px-4 py-2">
-                              {share ? `${selectedCurrency.symbol}${(share.portion / item.sharedBy.reduce((acc, p) => acc + parseFloat(p.portion), 0) * item.cost).toFixed(2)}` : "-"}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
 
-            {/* Final Cost Per Person */}
-            <div className="w-full mt-6">
-              <span className="poppins-semibold text-base sm:text-lg text-[#1f1f1f] dark:text-white">
-                Final Amount Per Person
-              </span>
-              <div className="overflow-x-auto">
-                <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-xs sm:text-sm">
-                  <thead>
-                    <tr className="bg-gray-100 dark:bg-gray-800">
-                      <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Person</th>
-                      <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Amount Owed</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(sharedCost).map(([name, amount]) => (
-                      <tr key={name} className="border border-gray-300">
-                        <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">{name}</td>
-                        <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">{selectedCurrency.symbol}{amount.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Rounding Off (If Needed) */}
-            {selectedCurrency.rounding && (
-              <div className="w-full mt-4">
+              {/* Item-wise Cost Breakdown */}
+              <div className="w-full mt-6">
                 <span className="poppins-semibold text-base sm:text-lg text-[#1f1f1f] dark:text-white">
-                  Rounding Adjustment
+                  Item-wise Breakdown
                 </span>
-                <p className="text-sm text-[#1f1f1f] dark:text-white">
-                  Total rounding difference: {selectedCurrency.symbol}{roundingDifference.toFixed(2)}
-                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-xs sm:text-sm">
+                    <thead>
+                      <tr className="bg-gray-100 dark:bg-gray-800">
+                        <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Item</th>
+                        {names.map((name) => (
+                          <th key={name} className="text-[#1f1f1f] dark:text-white border border-gray-300 px-2 sm:px-4 py-2">{name}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((item, index) => (
+                        <tr key={index} className="border border-gray-300">
+                          <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">{item.name}</td>
+                          {names.map((name) => {
+                            const share = item.sharedBy.find((p) => p.name === name);
+                            return (
+                              <td key={name} className="text-[#1f1f1f] dark:text-white border border-gray-300 px-2 sm:px-4 py-2">
+                                {share ? `${selectedCurrency.symbol}${(share.portion / item.sharedBy.reduce((acc, p) => acc + parseFloat(p.portion), 0) * item.cost).toFixed(2)}` : "-"}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            )}
 
-            {/* Buttons */}
-            <div className="flex justify-center gap-4 sm:gap-6 w-full mt-6">
-              {/* Show Bill Button */}
-              <button
-                onClick={handleBillShowCase}
-                className="bg-blue-500 text-white text-sm sm:text-base px-3 sm:px-4 py-2 rounded-md hover:bg-blue-600 transition"
-              >
-                Show Bill
-              </button>
-              {/* Close Button */}
-              <button 
-                onClick={() => setShowPerPerson(false)} 
-                className="px-3 sm:px-4 py-2 bg-red-500 text-white text-sm sm:text-base rounded-md hover:bg-red-600"
-              >
-                Close
-              </button>
-            </div>
+              {/* Final Cost Per Person */}
+              <div className="w-full mt-6">
+                <span className="poppins-semibold text-base sm:text-lg text-[#1f1f1f] dark:text-white">
+                  Final Amount Per Person
+                </span>
+                <div className="overflow-x-auto">
+                  <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-xs sm:text-sm">
+                    <thead>
+                      <tr className="bg-gray-100 dark:bg-gray-800">
+                        <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Person</th>
+                        <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Amount Owed</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(sharedCost).map(([name, amount]) => (
+                        <tr key={name} className="border border-gray-300">
+                          <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">{name}</td>
+                          <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">{selectedCurrency.symbol}{amount.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
-            {/* Download Buttons */}
-            <div className="flex justify-center gap-4 sm:gap-6 w-full mt-6">
-              {/* Download as PNG */}
-              <button
-                onClick={downloadPerPersonAsPNG}
-                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition text-xs sm:text-base"
-              >
-                Download as PNG
-              </button>
+              {/* Rounding Off (If Needed) */}
+              {selectedCurrency.rounding && (
+                <div className="w-full mt-4">
+                  <span className="poppins-semibold text-base sm:text-lg text-[#1f1f1f] dark:text-white">
+                    Rounding Adjustment
+                  </span>
+                  <p className="text-sm text-[#1f1f1f] dark:text-white">
+                    Total rounding difference: {selectedCurrency.symbol}{roundingDifference.toFixed(2)}
+                  </p>
+                </div>
+              )}
 
-              {/* Download as PDF */}
-              <button
-                onClick={downloadPerPersonAsPDF}
-                className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition text-xs sm:text-base"
-              >
-                Download as PDF
-              </button>
-            </div>
-          </div>
-        </div>
+              {/* Buttons */}
+              <div className="flex justify-center gap-4 sm:gap-6 w-full mt-6">
+                {/* Show Bill Button */}
+                <button
+                  onClick={handleBillShowCase}
+                  className="bg-blue-500 text-white text-sm sm:text-base px-3 sm:px-4 py-2 rounded-md hover:bg-blue-600 transition"
+                >
+                  Show Bill
+                </button>
+                {/* Close Button */}
+                <button 
+                  onClick={() => setShowPerPerson(false)} 
+                  className="px-3 sm:px-4 py-2 bg-red-500 text-white text-sm sm:text-base rounded-md hover:bg-red-600"
+                >
+                  Close
+                </button>
+              </div>
+
+              {/* Download Buttons */}
+              <div className="flex justify-center gap-4 sm:gap-6 w-full mt-6">
+                {/* Download as PNG */}
+                <button
+                  onClick={downloadPerPersonAsPNG}
+                  className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition text-xs sm:text-base"
+                >
+                  Download as PNG
+                </button>
+
+                {/* Download as PDF */}
+                <button
+                  onClick={downloadPerPersonAsPDF}
+                  className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition text-xs sm:text-base"
+                >
+                  Download as PDF
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
       )}
 
 
 
       {showBill && (
-        <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 py-10">
-          <div className="bg-white dark:bg-[#373c45] rounded-md sm:min-w-[400px] max-w-[90vw] p-6 flex flex-col items-center max-h-[90vh] overflow-auto">
-            <span className="text-xl sm:text-3xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay Bill Summary</span>
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 py-10"
+          >
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="bg-white dark:bg-[#373c45] rounded-md sm:min-w-[400px] max-w-[90vw] p-6 flex flex-col items-center max-h-[90vh] overflow-auto"
+            >
+              <span className="text-xl sm:text-3xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay Bill Summary</span>
 
-            {/* Date */}
-            <div className="w-full mt-4 flex justify-center">
-              <span className="poppins-regular text-sm text-[#1f1f1f] dark:text-white">
-                📅 Date: <span>{format(currentDate, "dd/MM/yyyy")}</span>
-              </span>
-            </div>
+              {/* Date */}
+              <div className="w-full mt-4 flex justify-center">
+                <span className="poppins-regular text-sm text-[#1f1f1f] dark:text-white">
+                  📅 Date: <span>{format(currentDate, "dd/MM/yyyy")}</span>
+                </span>
+              </div>
 
-            {/* Divider */}
-            <div className="w-full mt-6 flex items-center gap-2">
-              <div className="w-full border-t border-[#1f1f1f] dark:border-white border-dashed" />
-              <span className="poppins-regular text-nowrap text-[#1f1f1f] dark:text-white">Tax Invoice</span>
-              <div className="w-full border-t border-[#1f1f1f] dark:border-white border-dashed" />
-            </div>
+              {/* Divider */}
+              <div className="w-full mt-6 flex items-center gap-2">
+                <div className="w-full border-t border-[#1f1f1f] dark:border-white border-dashed" />
+                <span className="poppins-regular text-nowrap text-[#1f1f1f] dark:text-white">Tax Invoice</span>
+                <div className="w-full border-t border-[#1f1f1f] dark:border-white border-dashed" />
+              </div>
 
-            {/* Currency */}
-            <div className="w-full mt-4 text-center">
-              <span className="poppins-medium text-lg text-[#1f1f1f] dark:text-white">
-                {selectedCurrency.symbol} {selectedCurrency.name}
-              </span>
-            </div>
+              {/* Currency */}
+              <div className="w-full mt-4 text-center">
+                <span className="poppins-medium text-lg text-[#1f1f1f] dark:text-white">
+                  {selectedCurrency.symbol} {selectedCurrency.name}
+                </span>
+              </div>
 
-            {/* Bill Items */}
-            <div className="w-full mt-4 border-b">
-              {items.map((item, index) => (
-                <div key={index} className="flex justify-between py-2">
-                  <span className="poppins-regular text-[#1f1f1f] dark:text-white truncate">{item.name} (x{item.quantity})</span>
-                  <span className="poppins-regular text-[#1f1f1f] dark:text-white text-nowrap">
-                    {selectedCurrency.symbol} {item.cost.toFixed(2)}
+              {/* Bill Items */}
+              <div className="w-full mt-4 border-b">
+                {items.map((item, index) => (
+                  <div key={index} className="flex justify-between py-2">
+                    <span className="poppins-regular text-[#1f1f1f] dark:text-white truncate">{item.name} (x{item.quantity})</span>
+                    <span className="poppins-regular text-[#1f1f1f] dark:text-white text-nowrap">
+                      {selectedCurrency.symbol} {item.cost.toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Discounts */}
+              {discounts.length > 0 && (
+                <div className="w-full mt-4">
+                  {discounts.map((discount, index) => (
+                    <div key={index} className="flex justify-between text-green-500">
+                      <span className="poppins-regular">Discount {discount.symbol === "%" ? `(${discount.value}%)` : ""}</span>
+                      <span className="poppins-regular">
+                        -{selectedCurrency.symbol} {totalDiscount.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Taxes */}
+              {taxes.length > 0 && (
+                <div className="w-full mt-2">
+                  {taxes.map((tax, index) => (
+                    <div key={index} className="flex justify-between text-red-500">
+                      <span className="poppins-regular truncate">{tax.name} {tax.symbol === "%" ? `(${tax.value}%)` : ""}</span>
+                      <span className="poppins-regular text-nowrap">
+                        +{selectedCurrency.symbol} {calculateTax(tax).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Final Amount */}
+              <div className={`w-full ${selectedCurrency.rounding ? 'mt-2' : 'mt-4'} flex justify-between text-xl font-bold`}>
+                <span className="poppins-bold text-base text-[#1f1f1f] dark:text-white">Total:</span>
+                <span className="poppins-bold text-base text-[#1f1f1f] dark:text-white">
+                  {selectedCurrency.symbol} {finalTotal.toFixed(2)}
+                </span>
+              </div>
+
+              {/* Rounding */}
+              {selectedCurrency.rounding && (
+                <div className="w-full flex justify-between text-lg">
+                  <span className="poppins-regular text-sm text-[#1f1f1f] dark:text-white">Rounding:</span>
+                  <span className="poppins-regular text-sm text-[#1f1f1f] dark:text-white">
+                    {selectedCurrency.symbol} {roundingDifference.toFixed(2)}
                   </span>
                 </div>
-              ))}
-            </div>
+              )}
 
-            {/* Discounts */}
-            {discounts.length > 0 && (
-              <div className="w-full mt-4">
-                {discounts.map((discount, index) => (
-                  <div key={index} className="flex justify-between text-green-500">
-                    <span className="poppins-regular">Discount {discount.symbol === "%" ? `(${discount.value}%)` : ""}</span>
-                    <span className="poppins-regular">
-                      -{selectedCurrency.symbol} {totalDiscount.toFixed(2)}
-                    </span>
-                  </div>
-                ))}
+              {selectedCurrency.rounding && (
+                <div className="w-full mt-2 border-t border-[#1f1f1f] dark:border-white border-dashed"/>
+              )}
+
+              {/* Roundoff Total */}
+              {selectedCurrency.rounding && (
+                <div className="w-full mt-2 flex justify-between text-lg sm:text-xl font-bold">
+                  <span className="poppins-bold text-[#1f1f1f] dark:text-white">Roundoff Total:</span>
+                  <span className="poppins-bold text-[#1f1f1f] dark:text-white">
+                    {selectedCurrency.symbol} {roundoffTotal.toFixed(0)}
+                  </span>
+                </div>
+              )}
+
+
+              <div className="flex justify-center gap-6 w-full mt-6">
+                {/* Close Button */}
+                <button
+                  onClick={() => setShowBill(false)}
+                  className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition text-xs sm:text-base"
+                >
+                  Close
+                </button>
+
+                {/* Get Per Person Summary */}
+                <button onClick={handlePerPerson} className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition text-xs sm:text-base">
+                  Get Per Person Summary
+                </button>
               </div>
-            )}
 
-            {/* Taxes */}
-            {taxes.length > 0 && (
-              <div className="w-full mt-2">
-                {taxes.map((tax, index) => (
-                  <div key={index} className="flex justify-between text-red-500">
-                    <span className="poppins-regular truncate">{tax.name} {tax.symbol === "%" ? `(${tax.value}%)` : ""}</span>
-                    <span className="poppins-regular text-nowrap">
-                      +{selectedCurrency.symbol} {calculateTax(tax).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
+              <div className="flex justify-center gap-6 w-full mt-6">
+                {/* Download as PNG */}
+                <button
+                  onClick={downloadBillAsPNG}
+                  className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition text-xs sm:text-base"
+                >
+                  Download as PNG
+                </button>
+                
+                {/* Download as PDF */}
+                <button
+                  onClick={downloadBillAsPDF}
+                  className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition text-xs sm:text-base"
+                >
+                  Download as PDF
+                </button>
               </div>
-            )}
-
-            {/* Final Amount */}
-            <div className={`w-full ${selectedCurrency.rounding ? 'mt-2' : 'mt-4'} flex justify-between text-xl font-bold`}>
-              <span className="poppins-bold text-base text-[#1f1f1f] dark:text-white">Total:</span>
-              <span className="poppins-bold text-base text-[#1f1f1f] dark:text-white">
-                {selectedCurrency.symbol} {finalTotal.toFixed(2)}
-              </span>
-            </div>
-
-            {/* Rounding */}
-            {selectedCurrency.rounding && (
-              <div className="w-full flex justify-between text-lg">
-                <span className="poppins-regular text-sm text-[#1f1f1f] dark:text-white">Rounding:</span>
-                <span className="poppins-regular text-sm text-[#1f1f1f] dark:text-white">
-                  {selectedCurrency.symbol} {roundingDifference.toFixed(2)}
-                </span>
-              </div>
-            )}
-
-            {selectedCurrency.rounding && (
-              <div className="w-full mt-2 border-t border-[#1f1f1f] dark:border-white border-dashed"/>
-            )}
-
-            {/* Roundoff Total */}
-            {selectedCurrency.rounding && (
-              <div className="w-full mt-2 flex justify-between text-lg sm:text-xl font-bold">
-                <span className="poppins-bold text-[#1f1f1f] dark:text-white">Roundoff Total:</span>
-                <span className="poppins-bold text-[#1f1f1f] dark:text-white">
-                  {selectedCurrency.symbol} {roundoffTotal.toFixed(0)}
-                </span>
-              </div>
-            )}
-
-
-            <div className="flex justify-center gap-6 w-full mt-6">
-              {/* Close Button */}
-              <button
-                onClick={() => setShowBill(false)}
-                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition text-xs sm:text-base"
-              >
-                Close
-              </button>
-
-              {/* Get Per Person Summary */}
-              <button onClick={handlePerPerson} className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition text-xs sm:text-base">
-                Get Per Person Summary
-              </button>
-            </div>
-
-            <div className="flex justify-center gap-6 w-full mt-6">
-              {/* Download as PNG */}
-              <button
-                onClick={downloadBillAsPNG}
-                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition text-xs sm:text-base"
-              >
-                Download as PNG
-              </button>
-              
-              {/* Download as PDF */}
-              <button
-                onClick={downloadBillAsPDF}
-                className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition text-xs sm:text-base"
-              >
-                Download as PDF
-              </button>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
       )}
 
 
-      <h2 className="text-xl md:text-2xl poppins-bold text-[#1f1f1f] dark:text-white mb-10 underline">Split Expenses</h2>
+      <motion.span 
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
+        viewport={{once: true}}
+        className="text-xl md:text-2xl poppins-bold text-[#1f1f1f] dark:text-white mb-10 underline"
+      >Split Expenses
+      </motion.span>
 
       <form onSubmit={handleSubmit} className="w-full max-w-[90vw] sm:max-w-[400px] flex flex-col">
 
         {/* Name Input */}
         <div className="mb-10">
-          <label className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular">
+          <motion.label
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
+            viewport={{once: true}}
+            className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular"
+          >
             Add Names
-          </label>
-          <div className="flex items-center gap-2">
+          </motion.label>
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
+            viewport={{once: true}}
+            className="flex items-center gap-2"
+          >
             <input 
               type="text" 
               value={nameInput}
@@ -814,11 +860,14 @@ export default function Home() {
             >
               <Image src={theme === "dark" ? '/plus-light.svg' : '/plus-dark.svg'} alt="Add" width={16} height={16 } onClick={addName} />
             </button>
-          </div>
+          </motion.div>
 
           <div className="flex flex-wrap gap-2 mt-3">
             {names.map((name, index) => (
-              <div
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
                 key={index}
                 className="flex items-center p-3 bg-[#d9d9d9] dark:bg-gray-700 rounded"
               >
@@ -830,14 +879,20 @@ export default function Home() {
                 >
                   ✕
                 </button>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
 
 
         {/* Currency Input */}
-        <div className="w-full">
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2, duration: 0.8, ease: "easeOut" }}
+          viewport={{once: true}}
+          className="w-full"
+        >
           <label className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular">
             Select Currency
           </label>
@@ -868,23 +923,37 @@ export default function Home() {
               )}
             </ul>
           )}
-        </div>
+        </motion.div>
 
 
         {/* Purchased Items */}
         <div className="mb-8 mt-10">
-          <label className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular">
+          <motion.label
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.3, duration: 0.8, ease: "easeOut" }}
+            viewport={{once: true}}
+            className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular"
+          >
             Add Purchased Items
-          </label>
+          </motion.label>
           <div className="w-full flex gap-[6px]">
-            <input 
+            <motion.input
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.35, duration: 0.8, ease: "easeOut" }}
+              viewport={{once: true}} 
               type="text"
               value={itemInput}
               onChange={(e) => setItemInput(e.target.value)}
               placeholder="Item Name"
               className="w-full p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular" 
             />
-            <input 
+            <motion.input
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.4, duration: 0.8, ease: "easeOut" }}
+              viewport={{once: true}}
               type="number"
               value={quantityInput}
               onChange={(e) => setQuantityInput(e.target.value)}
@@ -893,7 +962,11 @@ export default function Home() {
               className="w-[45%] sm:w-2/6 p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular"
             />
           </div>
-          <input 
+          <motion.input 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.45, duration: 0.8, ease: "easeOut" }}
+            viewport={{once: true}}
             type="number"
             value={costInput}
             onChange={(e) => setCostInput(e.target.value)}
@@ -901,9 +974,21 @@ export default function Home() {
             className="w-full p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular no-arrows"
           />
 
-          <div className="flex flex-wrap gap-2 mb-3 w-full bg-[#e5e5e5] dark:bg-[#2f2f2f] p-2 rounded min-h-[50px]">
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.5, duration: 0.8, ease: "easeOut" }}
+            viewport={{once: true}}
+            className="flex flex-wrap gap-2 mb-3 w-full bg-[#e5e5e5] dark:bg-[#2f2f2f] p-2 rounded min-h-[50px]"
+          >
             {names.map((name, index) => (
-              <div key={index} className="flex items-center gap-2">
+              <motion.div 
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                key={index} 
+                className="flex items-center gap-2"
+              >
                   <button
                   type="button"
                   onClick={() => handleNameSelect(name)}
@@ -914,22 +999,32 @@ export default function Home() {
                 {selectedNames.includes(name) && (
                   <input type="number" placeholder="Portion" min="1" value={portions[name] ?? ""} onChange={(e) => handlePortionChange(name, e.target.value)} className="w-16 p-1 rounded bg-[#d9d9d9] dark:bg-[#374151] text-[#1f1f1f] dark:text-white placeholder:text-sm placeholder:ml-[2px]" />
                 )}
-              </div>
+              </motion.div>
             ))}
-          </div>
-          <button
+          </motion.div>
+          <motion.button
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.55, duration: 0.8, ease: "easeOut" }}
+            viewport={{once: true}}
             type="button"
             onClick={addItem}
-            className="mt-2 p-2 w-full bg-green-500 text-white rounded"
+            className="mt-2 p-2 w-full bg-green-500 text-white rounded poppins-regular hover:bg-green-600 transition-colors"
           >
             Add Item
-          </button>
+          </motion.button>
         </div>
 
         {/* Displaying Added Items */}
         <div className="mt-0">
           {items.map((item, index) => (
-          <div key={index} className="flex items-center justify-between p-3 bg-[#d9d9d9] dark:bg-gray-700 rounded mb-2">
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            key={index} 
+            className="flex items-center justify-between p-3 bg-[#d9d9d9] dark:bg-gray-700 rounded mb-2"
+          >
             <div>
               <p className="text-[#1f1f1f] dark:text-white">
               <b>{item.name}</b> -- {item.quantity} × {selectedCurrency.symbol}{item.costPerUnit} = <b>{selectedCurrency.symbol}{item.cost}</b>
@@ -945,46 +1040,70 @@ export default function Home() {
             >
               ✕
             </button>
-          </div>
+          </motion.div>
           ))}
         </div>
 
 
         {/* Discounts */}
         <div className="w-full mt-10">
-          <label className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular">
+          <motion.label
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.7, duration: 0.8, ease: "easeOut" }}
+            viewport={{once: true}} 
+            className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular"
+          >
             Add Discounts
-          </label>
+          </motion.label>
           <div className="w-full flex gap-[6px]">
-            <input 
+            <motion.input
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.75, duration: 0.8, ease: "easeOut" }}
+              viewport={{once: true}} 
               type="number"
               value={discountInput}
               onChange={(e) => setDiscountInput(e.target.value)}
               placeholder="Discount"
               className="w-full p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular no-arrows"
             />
-            <select
+            <motion.select
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.8, duration: 0.8, ease: "easeOut" }}
+              viewport={{once: true}}
               value={discountSymbol}
               onChange={(e) => setDiscountSymbol(e.target.value)}
               className="w-1/3 p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular appearance-none"
             >
               <option value="%">%</option>
               <option value={selectedCurrency.symbol}>{selectedCurrency.symbol}</option>
-            </select>
+            </motion.select>
           </div>
-          <button
+          <motion.button
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.85, duration: 0.8, ease: "easeOut" }}
+            viewport={{once: true}}
             type="button"
             onClick={addDiscount}
             className="mt-2 p-2 w-full bg-[#e5e5e5] dark:bg-[#2f2f2f] dark:hover:bg-[#1f1f1f] text-[#1f1f1f] dark:text-white rounded poppins-regular"
           >
             Add Discount
-          </button>
+          </motion.button>
         </div>
 
         {/* Displaying the added discounts */}
         <div className="mt-4 flex gap-2 flex-wrap">
           {discounts.map((discount, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-[#d9d9d9] dark:bg-gray-700 rounded mb-2 gap-4">
+            <motion.div 
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              key={index} 
+              className="flex items-center justify-between p-3 bg-[#d9d9d9] dark:bg-gray-700 rounded mb-2 gap-4"
+            >
               <p className="text-[#1f1f1f] dark:text-white">
                 {discount.value}{discount.symbol} Discount
               </p>
@@ -995,54 +1114,82 @@ export default function Home() {
               >
                 ✕
               </button>
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {/* Taxes Input */}
         <div className="w-full mt-10">
-          <label className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular">
+          <motion.label 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
+            viewport={{once: true}}
+            className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular"
+          >
             Add Taxes
-          </label>
+          </motion.label>
 
           <div className="w-full flex gap-[6px]">
-            <input 
+            <motion.input
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
+              viewport={{once: true}} 
               type="text" 
               value={taxName}
               onChange={(e) => setTaxName(e.target.value)}
               placeholder="Tax Name"
               className="w-full p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular"
             />
-            <input 
+            <motion.input 
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.25, duration: 0.8, ease: "easeOut" }}
+              viewport={{once: true}}
               type="number"
               value={taxInput}
               onChange={(e) => setTaxInput(e.target.value)}
               placeholder="Tax"
               className="w-2/6 p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular no-arrows"
             />
-            <select
+            <motion.select
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.5, duration: 0.8, ease: "easeOut" }}
+              viewport={{once: true}}
               value={taxSymbol}
               onChange={(e) => setTaxSymbol(e.target.value)}
               className="w-1/3 p-2 mb-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular appearance-none"
             >
               <option value="%">%</option>
               <option value={selectedCurrency.symbol}>{selectedCurrency.symbol}</option>
-            </select>
+            </motion.select>
           </div>
 
-          <button
+          <motion.button
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.75, duration: 0.8, ease: "easeOut" }}
+            viewport={{once: true}}
             type="button"
             onClick={addTax}
             className="mt-2 p-2 w-full bg-[#e5e5e5] dark:bg-[#2f2f2f] dark:hover:bg-[#1f1f1f] text-[#1f1f1f] dark:text-white rounded poppins-regular"
           >
             Add Tax
-          </button>
+          </motion.button>
         </div>
 
         {/* Displaying the added taxes */}
         <div className="mt-4 flex gap-2 flex-wrap">
           {taxes.map((tax, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-[#d9d9d9] dark:bg-gray-700 rounded mb-2 gap-4">
+            <motion.div 
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              key={index} 
+              className="flex items-center justify-between p-3 bg-[#d9d9d9] dark:bg-gray-700 rounded mb-2 gap-4"
+            >
               <p className="text-[#1f1f1f] dark:text-white">
                 {tax.name} - {tax.value}{tax.symbol} Tax
               </p>
@@ -1053,17 +1200,21 @@ export default function Home() {
               >
                 ✕
               </button>
-            </div>
+            </motion.div>
           ))}
         </div>
 
-        <button
+        <motion.button
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1.5, y: 0 }}
+          transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
+          viewport={{once: true}}
           type="submit"
-          className="mt-10 p-2 bg-green-500 text-white rounded"
+          className="mt-10 p-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors poppins-regular"
           onClick={handleCalculation}
         >
           Calculate
-        </button>
+        </motion.button>
 
       </form>
       
@@ -1262,13 +1413,21 @@ export default function Home() {
 
       <div className="mt-10 w-full flex justify-center">
         <div>
-          <span className="text-[#1f1f1f] dark:text-white poppins-medium" draggable="false">Made with ❤️ by </span>
-          <a
+          <span className="text-[#1f1f1f] dark:text-white poppins-medium select-none" draggable="false">Made with ❤️ by </span>
+          <motion.a
+            whileHover={{
+              scale: 1.2,
+              rotate: [0, 10, -10, 10, -10, 0], // Shakes left & right
+              y: [-2, 2, -2],
+              x: 10,
+              transition: { duration: 0.5 }, // Ensures the effect runs only once
+            }}
+            whileTap={{ scale: 0.9 }}
             href="https://www.github.com/aryannaik225"
-            className="text-blue-500 hover:underline poppins-medium"
+            className="text-blue-500 poppins-medium inline-block"
           >
             Aryan Naik
-          </a>
+          </motion.a>
         </div>
       </div>
     </div>
