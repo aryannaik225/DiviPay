@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import currencyList from "@/utils/currency.js";
-import { format, set } from "date-fns";
+import { format } from "date-fns";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { motion, AnimatePresence } from "motion/react"
@@ -30,6 +30,10 @@ export default function Home() {
   const [taxSymbol, setTaxSymbol] = useState("%");
   const [taxes, setTaxes] = useState([]);
   const [taxName, setTaxName] = useState("");
+  
+  // Contributions State
+  const [showContributions, setShowContributions] = useState(false);
+  const [contributions, setContributions] = useState({});
 
   const [currencyInput, setCurrencyInput] = useState("");
   const [filteredCurrencies, setFilteredCurrencies] = useState(currencyList);
@@ -48,15 +52,13 @@ export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showPerPerson, setShowPerPerson] = useState(false);
   const [sharedCost, setSharedCost] = useState({});
+  const [netBalances, setNetBalances] = useState({});
+  const [settlements, setSettlements] = useState([]);
 
   // Temporary states for making the divs for downloading the bill and per person summary
   const [showBillDiv, setShowBillDiv] = useState(false);
   const [showPerPersonDiv, setShowPerPersonDiv] = useState(false);
 
-
-  const tempFunction = () => {
-    console.log(document.getElementById("bill-container"))
-  }
 
   // Functions to handle the downloads
   
@@ -260,29 +262,39 @@ export default function Home() {
     const finalTotall = totalAfterDiscount + taxAmount;
     setFinalTotal(finalTotall);
 
-    console.log("Total Cost: ", totalCost);
-    console.log("Total Discount: ", discountAmount);
-    console.log("Total After Discount: ", totalAfterDiscount);
-    console.log("Total Tax: ", taxAmount);
-    console.log("Final Total: ", finalTotall);
+    let effectiveTotal = finalTotall;
 
     if (selectedCurrency.rounding === true) {
       const newTotal = Math.round(finalTotall);
       setRoundoffTotal(newTotal);
       const roundingDifference = newTotal - finalTotall;
       setRoundingDifference(roundingDifference);
-      console.log("Rounding Difference: ", roundingDifference);
-      console.log("New Total: ", newTotal);
+      effectiveTotal = newTotal;
     }
 
-    // calculating per person cost. Cant directly divide by the number of people because of the portions as well as only some dishes being shared by some people while some dishes are shared by all, and some are not shared at all.
-    // So, we need to calculate the total cost of the items shared by each person and then divide by the number of people.
-    // We can do this by creating a new object with the name of the person as the key and the total cost of the items shared by that person as the value.
-    // Then we can divide each value by the number of people to get the per person cost.
+    // --- LOGIC CHANGE START: Handle Contributions Logic ---
+    let usedContributions = {};
+    
+    if (showContributions) {
+      usedContributions = contributions;
+      
+      // Calculate total contributions
+      const totalPaid = Object.values(usedContributions).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
+      
+      // Validation: Contributions should not exceed total bill (with small buffer for floating point)
+      if (totalPaid > effectiveTotal + 0.1) {
+        toast.error(`Contributions (${selectedCurrency.symbol}${totalPaid.toFixed(2)}) cannot exceed Total Bill (${selectedCurrency.symbol}${effectiveTotal.toFixed(2)})!`, {
+          toastId: "overContributionWarning",
+        });
+        return; // Stop calculation
+      }
+    } else {
+      // If toggle is off, ignore any values present in state
+      usedContributions = {};
+    }
+    // --- LOGIC CHANGE END ---
 
     const sharedCosts = {};
-
-    console.log("Items: ", items);
 
     items.forEach(item => {
       let discountTotal = 0;
@@ -296,13 +308,10 @@ export default function Home() {
 
       let itemCost = item.cost - (item.cost * (discountTotal / 100));
 
-
       let totalPortion = 0;
       item.sharedBy.forEach(({ portion }) => {
         totalPortion += parseInt(portion, 10);
       });
-
-      console.log("Total Portion: ", totalPortion);
 
       item.sharedBy.forEach(({ name, portion }) => {
         if (sharedCosts[name]) {
@@ -321,16 +330,69 @@ export default function Home() {
       sharedCosts[name] += individualTax;
     });
 
-    console.log("Shared Costs: ", sharedCosts);
-
     if (selectedCurrency.rounding === true) {
       Object.keys(sharedCosts).forEach(name => {
         sharedCosts[name] = Math.round(sharedCosts[name]);
       });
     }
 
-    console.log("Shared Costs After Rounding: ", sharedCosts);
     setSharedCost(sharedCosts);
+
+    // Calculate Net Balances based on USED contributions (not necessarily input state)
+    const balances = {};
+    Object.keys(sharedCosts).forEach(name => {
+      const costShare = sharedCosts[name] || 0;
+      const contributed = usedContributions[name] || 0;
+      // If Cost > Contributed, Balance is Positive (They need to pay)
+      // If Cost < Contributed, Balance is Negative (They receive)
+      balances[name] = costShare - contributed; 
+    });
+    setNetBalances(balances);
+
+    // --- SETTLEMENT ALGORITHM ---
+    const debtors = [];
+    const creditors = [];
+
+    // Separate into who owes money (Debtors) and who is owed money (Creditors)
+    Object.entries(balances).forEach(([name, amount]) => {
+      if (amount > 0.01) {
+        debtors.push({ name, amount }); // Positive means they owe the group
+      } else if (amount < -0.01) {
+        creditors.push({ name, amount: Math.abs(amount) }); // Negative means they are owed
+      }
+    });
+
+    const newSettlements = [];
+    let d = 0; // Debtor pointer
+    let c = 0; // Creditor pointer
+
+    // Greedy matching algorithm
+    while (d < debtors.length && c < creditors.length) {
+      let debtor = debtors[d];
+      let creditor = creditors[c];
+
+      // The amount to settle is the minimum of what debtor owes and creditor is owed
+      let amountToSettle = Math.min(debtor.amount, creditor.amount);
+
+      if (amountToSettle > 0.01) {
+        newSettlements.push({
+          from: debtor.name,
+          to: creditor.name,
+          amount: amountToSettle
+        });
+      }
+
+      // Adjust amounts
+      debtor.amount -= amountToSettle;
+      creditor.amount -= amountToSettle;
+
+      // Move pointers if settled
+      if (debtor.amount < 0.01) d++;
+      if (creditor.amount < 0.01) c++;
+    }
+
+    setSettlements(newSettlements);
+    // ---------------------------
 
     setShowBill(true);
   }
@@ -368,6 +430,8 @@ export default function Home() {
     if (trimmedName && !names.includes(trimmedName)) {
       setNames([...names, trimmedName])
       setNameInput("")
+      // Initialize contribution for new name
+      setContributions(prev => ({...prev, [trimmedName]: 0}))
     } else if (names.includes(trimmedName)) {
       toast.error("Name already exists", {
         toastId: "nameExistsWarning",
@@ -376,13 +440,17 @@ export default function Home() {
   }
 
   const removeName = (name) => {
-    setNames(names.filter((n) => n !== name))-
+    setNames(names.filter((n) => n !== name));
     setItems((prevItems) => 
       prevItems.map((item) => ({
         ...item,
         sharedBy: item.sharedBy.filter((n) => n !== name)
       }))
-    )
+    );
+    // Cleanup contribution
+    const newContributions = {...contributions};
+    delete newContributions[name];
+    setContributions(newContributions);
   }
 
   const handleNameSelect = (name) => {
@@ -397,6 +465,13 @@ export default function Home() {
     if (portion === "" || /^[0-9]*$/.test(portion)) {
       setPortions({ ...portions, [name]: portion });
     }
+  };
+
+  const handleContributionChange = (name, value) => {
+    setContributions({
+      ...contributions,
+      [name]: parseFloat(value) || 0
+    });
   };
 
   const addItem = () => {
@@ -478,6 +553,12 @@ export default function Home() {
     setTaxes(taxes.filter((_, i) => i !== index));
   }
 
+  const handleCurrencySelect = (currency) => {
+    setSelectedCurrency(currency);
+    setCurrencyInput(`${currency.name} (${currency.symbol})`);
+    setShowDropdown(false);
+  };
+
   const handleCurrencyInputChange = (e) => {
     const value = e.target.value;
     setCurrencyInput(value);
@@ -506,12 +587,6 @@ export default function Home() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleCurrencySelect = (currency) => {
-    setSelectedCurrency(currency);
-    setCurrencyInput(`${currency.name} (${currency.symbol})`);
-    setShowDropdown(false);
-  };
 
   useEffect(() => {
     window.onerror = function (message, source, lineno, colno, error) {
@@ -591,27 +666,73 @@ export default function Home() {
               {/* Final Cost Per Person */}
               <div className="w-full mt-6">
                 <span className="poppins-semibold text-base sm:text-lg text-[#1f1f1f] dark:text-white">
-                  Final Amount Per Person
+                  Final Settlement
                 </span>
                 <div className="overflow-x-auto">
                   <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-xs sm:text-sm">
                     <thead>
                       <tr className="bg-gray-100 dark:bg-gray-800">
                         <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Person</th>
-                        <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Amount Owed</th>
+                        <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Total Share</th>
+                        {showContributions && <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Already Paid</th>}
+                        {showContributions && <th className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">Status</th>}
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(sharedCost).map(([name, amount]) => (
-                        <tr key={name} className="border border-gray-300">
-                          <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">{name}</td>
-                          <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">{selectedCurrency.symbol}{amount.toFixed(2)}</td>
-                        </tr>
-                      ))}
+                      {Object.entries(sharedCost).map(([name, amount]) => {
+                        const paid = contributions[name] || 0;
+                        const net = netBalances[name] || 0;
+                        const isSettled = Math.abs(net) < 0.01;
+                        const isPayer = net > 0;
+                        
+                        return (
+                          <tr key={name} className="border border-gray-300">
+                            <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white poppins-medium">{name}</td>
+                            <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">{selectedCurrency.symbol}{amount.toFixed(2)}</td>
+                            {showContributions && (
+                              <td className="border border-gray-300 px-2 sm:px-4 py-2 text-[#1f1f1f] dark:text-white">{selectedCurrency.symbol}{paid.toFixed(2)}</td>
+                            )}
+                            {showContributions && (
+                              <td className={`border border-gray-300 px-2 sm:px-4 py-2 poppins-medium ${isSettled ? "text-gray-500" : isPayer ? "text-red-500" : "text-green-500"}`}>
+                                {isSettled 
+                                  ? "Settled" 
+                                  : isPayer 
+                                    ? `To Pay: ${selectedCurrency.symbol}${Math.abs(net).toFixed(2)}` 
+                                    : `To Receive: ${selectedCurrency.symbol}${Math.abs(net).toFixed(2)}`
+                                }
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               </div>
+              
+              {/* SETTLEMENT PLAN (New Section) */}
+              {showContributions && settlements.length > 0 && (
+                <div className="w-full mt-6">
+                  <span className="poppins-semibold text-base sm:text-lg text-[#1f1f1f] dark:text-white">
+                    Settlement Plan (Who Pays Whom)
+                  </span>
+                  <div className="mt-2 flex flex-col gap-2 w-full">
+                    {settlements.map((settlement, index) => (
+                      <div key={index} className="flex justify-between items-center p-3 bg-gray-100 dark:bg-gray-700 rounded-md border-l-4 border-blue-500">
+                        <div className="flex items-center gap-2">
+                           <span className="poppins-medium text-[#1f1f1f] dark:text-white">{settlement.from}</span>
+                           <span className="text-gray-500 dark:text-gray-400 text-sm">pays</span>
+                           <span className="poppins-medium text-[#1f1f1f] dark:text-white">{settlement.to}</span>
+                        </div>
+                        <span className="poppins-bold text-blue-600 dark:text-blue-400">
+                          {selectedCurrency.symbol}{settlement.amount.toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
 
               {/* Rounding Off (If Needed) */}
               {selectedCurrency.rounding && (
@@ -665,7 +786,6 @@ export default function Home() {
           </motion.div>
         </AnimatePresence>
       )}
-
 
 
       {showBill && (
@@ -907,7 +1027,7 @@ export default function Home() {
           />
 
           {showDropdown && (
-            <ul className="absolute w-full max-w-[90vw] sm:max-w-[400px] border border-[#1f1f1f] dark:border-white mt-1 max-h-40 overflow-auto bg-[#e5e5e5] dark:bg-[#2f2f2f] rounded shadow-lg">
+            <ul className="absolute w-full max-w-[90vw] sm:max-w-[400px] border border-[#1f1f1f] dark:border-white mt-1 max-h-40 overflow-auto bg-[#e5e5e5] dark:bg-[#2f2f2f] rounded shadow-lg z-10">
               {filteredCurrencies.length > 0 ? (
                 filteredCurrencies.map((currency, index) => (
                   <li
@@ -1204,6 +1324,63 @@ export default function Home() {
           ))}
         </div>
 
+        {/* Contributions Section */}
+        <div className="w-full mt-10">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
+            viewport={{once: true}}
+            className="flex items-center gap-3 mb-4"
+          >
+             <input
+              type="checkbox"
+              id="contributionToggle"
+              checked={showContributions}
+              onChange={() => setShowContributions(!showContributions)}
+              className="w-5 h-5 accent-blue-500 cursor-pointer"
+            />
+            <label htmlFor="contributionToggle" className="text-[#1f1f1f] dark:text-white poppins-regular cursor-pointer select-none">
+              Are there any contributions already made?
+            </label>
+          </motion.div>
+
+          <AnimatePresence>
+            {showContributions && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="flex flex-col gap-3 p-4 bg-[#f0f0f0] dark:bg-[#1a1a1a] rounded-md">
+                  {names.length === 0 ? (
+                     <p className="text-sm text-gray-500 dark:text-gray-400">Add names first to assign contributions.</p>
+                  ) : (
+                    names.map((name, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <label className="text-[#1f1f1f] dark:text-white poppins-regular w-1/3 truncate">
+                          {name}
+                        </label>
+                        <div className="flex items-center gap-2 w-2/3">
+                          <span className="text-[#1f1f1f] dark:text-white">{selectedCurrency.symbol}</span>
+                          <input
+                            type="number"
+                            value={contributions[name] || 0}
+                            onChange={(e) => handleContributionChange(name, e.target.value)}
+                            className="w-full p-2 rounded bg-[#e5e5e5] dark:bg-[#2f2f2f] text-[#1f1f1f] dark:text-white poppins-regular no-arrows"
+                            placeholder="Amount Paid"
+                          />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         <motion.button
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1.5, y: 0 }}
@@ -1223,10 +1400,6 @@ export default function Home() {
         <div className="w-screen h-screen fixed inset-0 bg-gray-400 dark:bg-gray-950 backdrop-blur-[2px] bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-0 py-10">
           <div id="bill-container" className="bg-white dark:bg-[#373c45] min-w-400px max-w-[1900px] p-6 flex flex-col items-center ">
             <span className="text-3xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay Bill Summary</span>
-
-            {/* <button onClick={() => setShowBillDiv(false)}>
-              Lci
-            </button> */}
 
             {/* Date */}
             <div className="w-full mt-4 flex justify-center">
@@ -1374,27 +1547,71 @@ export default function Home() {
             {/* Final Cost Per Person */}
             <div className="w-full mt-6">
               <span className="poppins-semibold text-lg text-[#1f1f1f] dark:text-white">
-                Final Amount Per Person
+                Final Settlement
               </span>
               <div className="overflow-x-auto">
                 <table className="w-full mt-2 border-collapse border border-gray-300 dark:border-gray-700 text-sm">
                   <thead>
                     <tr className="bg-gray-100 dark:bg-gray-800">
                       <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Person</th>
-                      <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Amount Owed</th>
+                      <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Total Share</th>
+                      {showContributions && <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Already Paid</th>}
+                      {showContributions && <th className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">Status</th>}
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.entries(sharedCost).map(([name, amount]) => (
+                    {Object.entries(sharedCost).map(([name, amount]) => {
+                       const paid = contributions[name] || 0;
+                       const net = netBalances[name] || 0;
+                       const isSettled = Math.abs(net) < 0.01;
+                       const isPayer = net > 0;
+
+                      return (
                       <tr key={name} className="border border-gray-300">
                         <td className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">{name}</td>
                         <td className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">{selectedCurrency.symbol}{amount.toFixed(2)}</td>
+                        {showContributions && (
+                          <td className="border border-gray-300 px-4 py-2 text-[#1f1f1f] dark:text-white">{selectedCurrency.symbol}{paid.toFixed(2)}</td>
+                        )}
+                        {showContributions && (
+                          <td className={`border border-gray-300 px-4 py-2 poppins-medium ${isSettled ? "text-gray-500" : isPayer ? "text-red-500" : "text-green-500"}`}>
+                             {isSettled 
+                                  ? "Settled" 
+                                  : isPayer 
+                                    ? `To Pay: ${selectedCurrency.symbol}${Math.abs(net).toFixed(2)}` 
+                                    : `To Receive: ${selectedCurrency.symbol}${Math.abs(net).toFixed(2)}`
+                              }
+                          </td>
+                        )}
                       </tr>
-                    ))}
+                    )})}
                   </tbody>
                 </table>
               </div>
             </div>
+
+            {/* SETTLEMENT PLAN (Downloadable View) */}
+            {showContributions && settlements.length > 0 && (
+              <div className="w-full mt-6">
+                <span className="poppins-semibold text-lg text-[#1f1f1f] dark:text-white">
+                  Settlement Plan (Who Pays Whom)
+                </span>
+                <div className="mt-2 flex flex-col gap-2 w-full">
+                  {settlements.map((settlement, index) => (
+                    <div key={index} className="flex justify-between items-center p-3 bg-gray-100 dark:bg-gray-700 rounded-md border-l-4 border-blue-500">
+                      <div className="flex items-center gap-2">
+                          <span className="poppins-medium text-[#1f1f1f] dark:text-white">{settlement.from}</span>
+                          <span className="text-gray-500 dark:text-gray-400 text-sm">pays</span>
+                          <span className="poppins-medium text-[#1f1f1f] dark:text-white">{settlement.to}</span>
+                      </div>
+                      <span className="poppins-bold text-blue-600 dark:text-blue-400">
+                        {selectedCurrency.symbol}{settlement.amount.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Rounding Off (If Needed) */}
             {selectedCurrency.rounding && (
