@@ -13,13 +13,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const viewport ={
-  themeColor: "#ffffff",
-}
-
 export const metadata = {
   title: "DiviPay",
   description: "An app to simplify expense distribution among friends",
+  themeColor: "#ffffff",
   manifest: "/manifest.json",
 };
 
