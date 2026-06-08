@@ -62,57 +62,80 @@ export default function Home() {
 
   // Functions to handle the downloads
   
+  const handleShareOrDownload = async (blob, filename) => {
+    const file = new File([blob], filename, { type: blob.type });
+
+    // Check if the device supports native sharing with files (iOS/Android)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          title: 'DiviPay Split',
+          text: 'Here is the bill breakdown from DiviPay!',
+          files: [file]
+        });
+        return; // Success, exit out
+      } catch (error) {
+        console.log('Share failed or cancelled', error);
+        // If the user simply closed the share sheet, abort so it doesn't force a download
+        if (error.name === 'AbortError') return; 
+      }
+    }
+
+    // Fallback for Desktop or browsers that don't support file sharing
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const downloadBillAsPNG = async () => {
     setShowBillDiv(true)
-    
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
     const billElement = document.getElementById("bill-container")
 
     if (!billElement) {
-      toast.error("No bill to download", {
-        toastId: "noBillWarning",
-      });
+      toast.error("No bill to download", { toastId: "noBillWarning" });
+      setShowBillDiv(false);
       return;
     }
 
     const canvas = await html2canvas(billElement, { scale: 2 })
-    const link = document.createElement("a")
-    link.href = canvas.toDataURL('image/png')
-    link.download = "DiviPay_Bill.png"
-    link.click()
+    
+    // Convert canvas to a Blob and pass to the share handler
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    await handleShareOrDownload(blob, "DiviPay_Bill.png");
 
     setShowBillDiv(false)
   }
 
   const downloadBillAsPDF = async () => {
     setShowBillDiv(true);
-  
     await new Promise((resolve) => setTimeout(resolve, 1000));
   
     const billElement = document.getElementById("bill-container");
   
     if (!billElement) {
       toast.error("No bill to download", { toastId: "noBillWarning" });
+      setShowBillDiv(false);
       return;
     }
   
     const canvas = await html2canvas(billElement, { scale: 2 });
-  
     const imgData = canvas.toDataURL("image/png");
   
     const pdf = new jsPDF("p", "mm", "a4");
-    const imgWidth = 210; // A4 width in mm
-    const pageHeight = 297; // A4 height in mm
-    const imgHeight = (canvas.height * imgWidth) / canvas.width; // Scale height proportionally
+    const imgWidth = 210; 
+    const pageHeight = 297; 
+    const imgHeight = (canvas.height * imgWidth) / canvas.width; 
   
-    let yPosition = 0;
-  
-    // If the image height fits in one page, just add it normally
     if (imgHeight <= pageHeight) {
       pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
     } else {
-      // Handle multi-page PDF
       let remainingHeight = imgHeight;
       let pageOffset = 0;
   
@@ -137,7 +160,6 @@ export default function Home() {
         );
   
         const slicedImgData = canvasSlice.toDataURL("image/png");
-  
         pdf.addImage(slicedImgData, "PNG", 0, 0, imgWidth, sliceHeight);
   
         remainingHeight -= sliceHeight;
@@ -149,7 +171,10 @@ export default function Home() {
       }
     }
   
-    pdf.save("DiviPay_Bill.pdf");
+    // Use the Blob output instead of pdf.save()
+    const pdfBlob = pdf.output("blob");
+    await handleShareOrDownload(pdfBlob, "DiviPay_Bill.pdf");
+    
     setShowBillDiv(false);
   };
   
@@ -157,39 +182,34 @@ export default function Home() {
 
   const downloadPerPersonAsPNG = async () => {
     setShowPerPersonDiv(true)
-
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
     const perPersonElement = document.getElementById("perPerson-container")
 
     if (!perPersonElement) {
-      toast.error("No per person summary to download", {
-        toastId: "noPerPersonWarning",
-      });
+      toast.error("No per person summary to download", { toastId: "noPerPersonWarning" });
+      setShowPerPersonDiv(false);
       return;
     }
 
     const canvas = await html2canvas(perPersonElement, { scale: 2 })
-    const link = document.createElement("a")
-    link.href = canvas.toDataURL('image/png')
-    link.download = "DiviPay_Per_Person.png"
-    link.click()
+    
+    // Convert canvas to a Blob and pass to the share handler
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    await handleShareOrDownload(blob, "DiviPay_Per_Person.png");
 
     setShowPerPersonDiv(false)
   }
 
   const downloadPerPersonAsPDF = async () => {
-
     setShowPerPersonDiv(true)
-
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
     const perPersonElement = document.getElementById("perPerson-container")
 
     if (!perPersonElement) {
-      toast.error("No per person summary to download", {
-        toastId: "noPerPersonWarning",
-      });
+      toast.error("No per person summary to download", { toastId: "noPerPersonWarning" });
+      setShowPerPersonDiv(false);
       return;
     }
 
@@ -213,7 +233,9 @@ export default function Home() {
       }
     }
 
-    pdf.save("DiviPay_Per_Person.pdf")
+    // Use the Blob output instead of pdf.save()
+    const pdfBlob = pdf.output("blob");
+    await handleShareOrDownload(pdfBlob, "DiviPay_Per_Person.pdf");
 
     setShowPerPersonDiv(false)
   }
