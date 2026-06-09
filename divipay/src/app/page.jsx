@@ -63,9 +63,34 @@ export default function Home() {
   // Functions to handle the downloads
   
   const handleShareOrDownload = async (blob, filename) => {
-    const file = new File([blob], filename, { type: blob.type });
+    if (!blob) {
+      toast.error("Generation failed. Please try again.");
+      return;
+    }
 
-    // Check if the device supports native sharing with files (iOS/Android)
+    const file = new File([blob], filename, { type: blob.type });
+    const url = URL.createObjectURL(blob);
+
+    const forceDownload = () => {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    };
+
+    // Detect if the user is on a mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // If it's a Desktop (PC/Mac), ALWAYS force a direct download.
+    // Desktop Web Share APIs are buggy and annoying.
+    if (!isMobile) {
+      forceDownload();
+      return;
+    }
+    // If it is a mobile device, try to trigger the native Share Sheet
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({
@@ -73,171 +98,193 @@ export default function Home() {
           text: 'Here is the bill breakdown from DiviPay!',
           files: [file]
         });
-        return; // Success, exit out
+        return; 
       } catch (error) {
         console.log('Share failed or cancelled', error);
-        // If the user simply closed the share sheet, abort so it doesn't force a download
         if (error.name === 'AbortError') return; 
+        forceDownload();
+        return;
       }
     }
-
-    // Fallback for Desktop or browsers that don't support file sharing
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Fallback if the mobile browser doesn't support file sharing
+    forceDownload();
   };
 
   const downloadBillAsPNG = async () => {
-    setShowBillDiv(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      setShowBillDiv(true);
+      await new Promise((resolve) => setTimeout(resolve, 150)); 
 
-    const billElement = document.getElementById("bill-container")
+      const billElement = document.getElementById("bill-container");
+      if (!billElement) {
+        toast.error("No bill to download", { toastId: "noBillWarning" });
+        return;
+      }
 
-    if (!billElement) {
-      toast.error("No bill to download", { toastId: "noBillWarning" });
-      setShowBillDiv(false);
-      return;
+      const canvas = await html2canvas(billElement, { scale: 2 });
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      
+      await handleShareOrDownload(blob, "DiviPay_Bill.png");
+
+      // FIX FOR IOS MEMORY LEAK: Destroy the canvas after using it
+      canvas.width = 0;
+      canvas.height = 0;
+    } catch (error) {
+      console.error("Error generating PNG:", error);
+      toast.error("Failed to generate image.");
+    } finally {
+      setShowBillDiv(false); 
     }
-
-    const canvas = await html2canvas(billElement, { scale: 2 })
-    
-    // Convert canvas to a Blob and pass to the share handler
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-    await handleShareOrDownload(blob, "DiviPay_Bill.png");
-
-    setShowBillDiv(false)
   }
 
   const downloadBillAsPDF = async () => {
-    setShowBillDiv(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  
-    const billElement = document.getElementById("bill-container");
-  
-    if (!billElement) {
-      toast.error("No bill to download", { toastId: "noBillWarning" });
-      setShowBillDiv(false);
-      return;
-    }
-  
-    const canvas = await html2canvas(billElement, { scale: 2 });
-    const imgData = canvas.toDataURL("image/png");
-  
-    const pdf = new jsPDF("p", "mm", "a4");
-    const imgWidth = 210; 
-    const pageHeight = 297; 
-    const imgHeight = (canvas.height * imgWidth) / canvas.width; 
-  
-    if (imgHeight <= pageHeight) {
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-    } else {
-      let remainingHeight = imgHeight;
-      let pageOffset = 0;
-  
-      while (remainingHeight > 0) {
-        const sliceHeight = Math.min(remainingHeight, pageHeight);
-  
-        const canvasSlice = document.createElement("canvas");
-        canvasSlice.width = canvas.width;
-        canvasSlice.height = (sliceHeight * canvas.width) / imgWidth;
-  
-        const ctx = canvasSlice.getContext("2d");
-        ctx.drawImage(
-          canvas,
-          0,
-          pageOffset * (canvas.height / imgHeight),
-          canvas.width,
-          canvasSlice.height,
-          0,
-          0,
-          canvasSlice.width,
-          canvasSlice.height
-        );
-  
-        const slicedImgData = canvasSlice.toDataURL("image/png");
-        pdf.addImage(slicedImgData, "PNG", 0, 0, imgWidth, sliceHeight);
-  
-        remainingHeight -= sliceHeight;
-        pageOffset += sliceHeight;
-  
-        if (remainingHeight > 0) {
-          pdf.addPage();
+    try {
+      setShowBillDiv(true);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    
+      const billElement = document.getElementById("bill-container");
+      if (!billElement) {
+        toast.error("No bill to download", { toastId: "noBillWarning" });
+        return;
+      }
+    
+      const canvas = await html2canvas(billElement, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+    
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgWidth = 210; 
+      const pageHeight = 297; 
+      const imgHeight = (canvas.height * imgWidth) / canvas.width; 
+    
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      } else {
+        let remainingHeight = imgHeight;
+        let pageOffset = 0;
+    
+        while (remainingHeight > 0) {
+          const sliceHeight = Math.min(remainingHeight, pageHeight);
+          const canvasSlice = document.createElement("canvas");
+          canvasSlice.width = canvas.width;
+          canvasSlice.height = (sliceHeight * canvas.width) / imgWidth;
+    
+          const ctx = canvasSlice.getContext("2d");
+          ctx.drawImage(
+            canvas,
+            0,
+            pageOffset * (canvas.height / imgHeight),
+            canvas.width,
+            canvasSlice.height,
+            0,
+            0,
+            canvasSlice.width,
+            canvasSlice.height
+          );
+    
+          const slicedImgData = canvasSlice.toDataURL("image/png");
+          pdf.addImage(slicedImgData, "PNG", 0, 0, imgWidth, sliceHeight);
+    
+          remainingHeight -= sliceHeight;
+          pageOffset += sliceHeight;
+    
+          if (remainingHeight > 0) {
+            pdf.addPage();
+          }
+
+          // FIX FOR IOS MEMORY LEAK: Destroy intermediate canvases
+          canvasSlice.width = 0;
+          canvasSlice.height = 0;
         }
       }
-    }
-  
-    // Use the Blob output instead of pdf.save()
-    const pdfBlob = pdf.output("blob");
-    await handleShareOrDownload(pdfBlob, "DiviPay_Bill.pdf");
     
-    setShowBillDiv(false);
+      const pdfBlob = pdf.output("blob");
+      await handleShareOrDownload(pdfBlob, "DiviPay_Bill.pdf");
+
+      // FIX FOR IOS MEMORY LEAK
+      canvas.width = 0;
+      canvas.height = 0;
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF.");
+    } finally {
+      setShowBillDiv(false);
+    }
   };
   
   
 
   const downloadPerPersonAsPNG = async () => {
-    setShowPerPersonDiv(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      setShowPerPersonDiv(true);
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
-    const perPersonElement = document.getElementById("perPerson-container")
+      const perPersonElement = document.getElementById("perPerson-container");
+      if (!perPersonElement) {
+        toast.error("No per person summary to download", { toastId: "noPerPersonWarning" });
+        return;
+      }
 
-    if (!perPersonElement) {
-      toast.error("No per person summary to download", { toastId: "noPerPersonWarning" });
+      // Reduced scale for PerPerson table to prevent iOS crash on wide elements
+      const canvas = await html2canvas(perPersonElement, { scale: 1.5 });
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      
+      await handleShareOrDownload(blob, "DiviPay_Per_Person.png");
+
+      // FIX FOR IOS MEMORY LEAK
+      canvas.width = 0;
+      canvas.height = 0;
+    } catch (error) {
+      console.error("Error generating PNG:", error);
+      toast.error("Failed to generate image.");
+    } finally {
       setShowPerPersonDiv(false);
-      return;
     }
-
-    const canvas = await html2canvas(perPersonElement, { scale: 2 })
-    
-    // Convert canvas to a Blob and pass to the share handler
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-    await handleShareOrDownload(blob, "DiviPay_Per_Person.png");
-
-    setShowPerPersonDiv(false)
   }
 
   const downloadPerPersonAsPDF = async () => {
-    setShowPerPersonDiv(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      setShowPerPersonDiv(true);
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
-    const perPersonElement = document.getElementById("perPerson-container")
-
-    if (!perPersonElement) {
-      toast.error("No per person summary to download", { toastId: "noPerPersonWarning" });
-      setShowPerPersonDiv(false);
-      return;
-    }
-
-    const canvas = await html2canvas(perPersonElement, { scale: 2 })
-    const imgData = canvas.toDataURL('image/png')
-
-    const pdf = new jsPDF("p", "mm", "a4")
-    const imgWidth = 210
-    const imgHeight = (canvas.height * imgWidth) / canvas.width
-
-    let yPosition = 10
-    let remainingHeight = imgHeight
-
-    while (remainingHeight > 0) {
-      pdf.addImage(imgData, "PNG", 0, yPosition, imgWidth, imgHeight)
-      remainingHeight -= 297
-
-      if (remainingHeight > 0) {
-        pdf.addPage()
-        yPosition = 0
+      const perPersonElement = document.getElementById("perPerson-container");
+      if (!perPersonElement) {
+        toast.error("No per person summary to download", { toastId: "noPerPersonWarning" });
+        return;
       }
+
+      // Reduced scale for PerPerson table
+      const canvas = await html2canvas(perPersonElement, { scale: 1.5 });
+      const imgData = canvas.toDataURL('image/png');
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let yPosition = 10;
+      let remainingHeight = imgHeight;
+
+      while (remainingHeight > 0) {
+        pdf.addImage(imgData, "PNG", 0, yPosition, imgWidth, imgHeight);
+        remainingHeight -= 297;
+
+        if (remainingHeight > 0) {
+          pdf.addPage();
+          yPosition = 0;
+        }
+      }
+
+      const pdfBlob = pdf.output("blob");
+      await handleShareOrDownload(pdfBlob, "DiviPay_Per_Person.pdf");
+
+      // FIX FOR IOS MEMORY LEAK
+      canvas.width = 0;
+      canvas.height = 0;
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF.");
+    } finally {
+      setShowPerPersonDiv(false);
     }
-
-    // Use the Blob output instead of pdf.save()
-    const pdfBlob = pdf.output("blob");
-    await handleShareOrDownload(pdfBlob, "DiviPay_Per_Person.pdf");
-
-    setShowPerPersonDiv(false)
   }
 
 
