@@ -61,7 +61,7 @@ export default function Home() {
 
 
   // Functions to handle the downloads
-  
+  // --- NATIVE SHARE HELPER FIX (V4 - The Rock Solid Version) ---
   const handleShareOrDownload = async (blob, filename) => {
     if (!blob) {
       toast.error("Generation failed. Please try again.");
@@ -81,16 +81,14 @@ export default function Home() {
       URL.revokeObjectURL(url);
     };
 
-    // Detect if the user is on a mobile device
+    // Desktop browsers have buggy/annoying share APIs. Force standard download for them.
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-    // If it's a Desktop (PC/Mac), ALWAYS force a direct download.
-    // Desktop Web Share APIs are buggy and annoying.
     if (!isMobile) {
       forceDownload();
       return;
     }
-    // If it is a mobile device, try to trigger the native Share Sheet
+
+    // Try native share for iOS/Android
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({
@@ -106,29 +104,36 @@ export default function Home() {
         return;
       }
     }
-    // Fallback if the mobile browser doesn't support file sharing
+
     forceDownload();
+  };
+
+  // Helper to ensure html2canvas doesn't throw CORS errors
+  const generateCanvas = async (elementId, scaleValue) => {
+    const element = document.getElementById(elementId);
+    if (!element) throw new Error("Element not found");
+    
+    return await html2canvas(element, { 
+      scale: scaleValue,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null
+    });
   };
 
   const downloadBillAsPNG = async () => {
     try {
       setShowBillDiv(true);
-      await new Promise((resolve) => setTimeout(resolve, 150)); 
+      // REVERTED: Give React 800ms to fully paint the UI before snapping it
+      await new Promise((resolve) => setTimeout(resolve, 800)); 
 
-      const billElement = document.getElementById("bill-container");
-      if (!billElement) {
-        toast.error("No bill to download", { toastId: "noBillWarning" });
-        return;
-      }
-
-      const canvas = await html2canvas(billElement, { scale: 2 });
+      const canvas = await generateCanvas("bill-container", 2);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       
       await handleShareOrDownload(blob, "DiviPay_Bill.png");
 
-      // FIX FOR IOS MEMORY LEAK: Destroy the canvas after using it
       canvas.width = 0;
-      canvas.height = 0;
+      canvas.height = 0; // Prevent Apple memory leak
     } catch (error) {
       console.error("Error generating PNG:", error);
       toast.error("Failed to generate image.");
@@ -140,15 +145,9 @@ export default function Home() {
   const downloadBillAsPDF = async () => {
     try {
       setShowBillDiv(true);
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 800));
     
-      const billElement = document.getElementById("bill-container");
-      if (!billElement) {
-        toast.error("No bill to download", { toastId: "noBillWarning" });
-        return;
-      }
-    
-      const canvas = await html2canvas(billElement, { scale: 2 });
+      const canvas = await generateCanvas("bill-container", 2);
       const imgData = canvas.toDataURL("image/png");
     
       const pdf = new jsPDF("p", "mm", "a4");
@@ -170,15 +169,9 @@ export default function Home() {
     
           const ctx = canvasSlice.getContext("2d");
           ctx.drawImage(
-            canvas,
-            0,
-            pageOffset * (canvas.height / imgHeight),
-            canvas.width,
-            canvasSlice.height,
-            0,
-            0,
-            canvasSlice.width,
-            canvasSlice.height
+            canvas, 0, pageOffset * (canvas.height / imgHeight),
+            canvas.width, canvasSlice.height,
+            0, 0, canvasSlice.width, canvasSlice.height
           );
     
           const slicedImgData = canvasSlice.toDataURL("image/png");
@@ -190,8 +183,6 @@ export default function Home() {
           if (remainingHeight > 0) {
             pdf.addPage();
           }
-
-          // FIX FOR IOS MEMORY LEAK: Destroy intermediate canvases
           canvasSlice.width = 0;
           canvasSlice.height = 0;
         }
@@ -200,7 +191,6 @@ export default function Home() {
       const pdfBlob = pdf.output("blob");
       await handleShareOrDownload(pdfBlob, "DiviPay_Bill.pdf");
 
-      // FIX FOR IOS MEMORY LEAK
       canvas.width = 0;
       canvas.height = 0;
     } catch (error) {
@@ -211,26 +201,16 @@ export default function Home() {
     }
   };
   
-  
-
   const downloadPerPersonAsPNG = async () => {
     try {
       setShowPerPersonDiv(true);
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
-      const perPersonElement = document.getElementById("perPerson-container");
-      if (!perPersonElement) {
-        toast.error("No per person summary to download", { toastId: "noPerPersonWarning" });
-        return;
-      }
-
-      // Reduced scale for PerPerson table to prevent iOS crash on wide elements
-      const canvas = await html2canvas(perPersonElement, { scale: 1.5 });
+      const canvas = await generateCanvas("perPerson-container", 1.5);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       
       await handleShareOrDownload(blob, "DiviPay_Per_Person.png");
 
-      // FIX FOR IOS MEMORY LEAK
       canvas.width = 0;
       canvas.height = 0;
     } catch (error) {
@@ -244,16 +224,9 @@ export default function Home() {
   const downloadPerPersonAsPDF = async () => {
     try {
       setShowPerPersonDiv(true);
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
-      const perPersonElement = document.getElementById("perPerson-container");
-      if (!perPersonElement) {
-        toast.error("No per person summary to download", { toastId: "noPerPersonWarning" });
-        return;
-      }
-
-      // Reduced scale for PerPerson table
-      const canvas = await html2canvas(perPersonElement, { scale: 1.5 });
+      const canvas = await generateCanvas("perPerson-container", 1.5);
       const imgData = canvas.toDataURL('image/png');
 
       const pdf = new jsPDF("p", "mm", "a4");
@@ -276,7 +249,6 @@ export default function Home() {
       const pdfBlob = pdf.output("blob");
       await handleShareOrDownload(pdfBlob, "DiviPay_Per_Person.pdf");
 
-      // FIX FOR IOS MEMORY LEAK
       canvas.width = 0;
       canvas.height = 0;
     } catch (error) {
