@@ -7,7 +7,8 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import currencyList from "@/utils/currency.js";
 import { format } from "date-fns";
-import html2canvas from "html2canvas";
+// import html2canvas from "html2canvas";
+import { toBlob, toCanvas } from "html-to-image";
 import { jsPDF } from "jspdf";
 import { motion, AnimatePresence } from "motion/react"
 
@@ -104,25 +105,14 @@ export default function Home() {
     forceDownload();
   };
 
-  const generateCanvas = async (elementId, scaleValue) => {
-    const element = document.getElementById(elementId);
-    if (!element) throw new Error(`Element ${elementId} not found in DOM`);
-    
-    return await html2canvas(element, { 
-      scale: scaleValue,
-      useCORS: true,
-      backgroundColor: null,
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight
-    });
-  };
-
   const downloadBillAsPNG = async () => {
     try {
-      const canvas = await generateCanvas("bill-container-hidden", 2);
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      const element = document.getElementById("bill-container-hidden");
+      if (!element) throw new Error("Hidden container not found");
+
+      // toBlob hands us the file natively. No canvas conversion needed!
+      const blob = await toBlob(element, { pixelRatio: 2 });
       await handleShareOrDownload(blob, "DiviPay_Bill.png");
-      canvas.width = 0; canvas.height = 0; 
     } catch (error) {
       console.error("Error generating PNG:", error);
       toast.error(`Error: ${error.message}`);
@@ -131,9 +121,14 @@ export default function Home() {
 
   const downloadBillAsPDF = async () => {
     try {
-      const canvas = await generateCanvas("bill-container-hidden", 2);
+      const element = document.getElementById("bill-container-hidden");
+      if (!element) throw new Error("Hidden container not found");
+
+      // toCanvas gives us the exact same output we need for your PDF slicer
+      const canvas = await toCanvas(element, { pixelRatio: 2 });
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
+      
       const imgWidth = 210; 
       const pageHeight = 297; 
       const imgHeight = (canvas.height * imgWidth) / canvas.width; 
@@ -159,11 +154,14 @@ export default function Home() {
           remainingHeight -= sliceHeight;
           pageOffset += sliceHeight;
           if (remainingHeight > 0) pdf.addPage();
+          
           canvasSlice.width = 0; canvasSlice.height = 0;
         }
       }
+      
       const pdfBlob = pdf.output("blob");
       await handleShareOrDownload(pdfBlob, "DiviPay_Bill.pdf");
+      
       canvas.width = 0; canvas.height = 0;
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -173,10 +171,12 @@ export default function Home() {
   
   const downloadPerPersonAsPNG = async () => {
     try {
-      const canvas = await generateCanvas("perPerson-container-hidden", 1.5);
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      const element = document.getElementById("perPerson-container-hidden");
+      if (!element) throw new Error("Hidden container not found");
+
+      // scale: 1.5 translates to pixelRatio: 1.5
+      const blob = await toBlob(element, { pixelRatio: 1.5 });
       await handleShareOrDownload(blob, "DiviPay_Per_Person.png");
-      canvas.width = 0; canvas.height = 0;
     } catch (error) {
       console.error("Error generating PNG:", error);
       toast.error(`Error: ${error.message}`);
@@ -185,9 +185,13 @@ export default function Home() {
 
   const downloadPerPersonAsPDF = async () => {
     try {
-      const canvas = await generateCanvas("perPerson-container-hidden", 1.5);
+      const element = document.getElementById("perPerson-container-hidden");
+      if (!element) throw new Error("Hidden container not found");
+
+      const canvas = await toCanvas(element, { pixelRatio: 1.5 });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF("p", "mm", "a4");
+      
       const imgWidth = 210;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let yPosition = 10;
@@ -201,8 +205,10 @@ export default function Home() {
           yPosition = 0;
         }
       }
+      
       const pdfBlob = pdf.output("blob");
       await handleShareOrDownload(pdfBlob, "DiviPay_Per_Person.pdf");
+      
       canvas.width = 0; canvas.height = 0;
     } catch (error) {
       console.error("Error generating PDF:", error);
