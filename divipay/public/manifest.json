@@ -1,9 +1,10 @@
 {
-  "name": "DiviPay",
+  "name": "DiviPay - Split Expenses",
   "short_name": "DiviPay",
-  "description": "Easily split and manage expenses among friends.",
+  "description": "Easily split restaurant bills, apply discounts, and calculate taxes with friends.",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#1f1f1f",
   "icons": [
@@ -25,6 +26,16 @@
     {
       "src": "/icon-512x512.png",
       "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-768x768.png",
+      "sizes": "768x768",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-1024x1024.png",
+      "sizes": "1024x1024",
       "type": "image/png"
     },
     {
