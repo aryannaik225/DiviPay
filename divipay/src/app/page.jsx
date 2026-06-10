@@ -7,7 +7,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import currencyList from "@/utils/currency.js";
 import { format } from "date-fns";
-// import html2canvas from "html2canvas";
+import Link from "next/link";
 import { toBlob, toCanvas } from "html-to-image";
 import { jsPDF } from "jspdf";
 import { motion, AnimatePresence } from "motion/react"
@@ -598,12 +598,12 @@ export default function Home() {
   return (
     <div className="bg-[#ffffff] dark:bg-[#0f0f0f] flex flex-col items-center justify-start min-h-screen py-10">
       <ToastContainer />
-      <div className="flex justify-between items-center mb-10 w-full max-w-[90vw] sm:max-w-[400px] md:max-w-[500px]">
+      <div className="flex justify-between items-center mb-10 w-full max-w-[90vw] sm:max-w-100 md:max-w-125">
         <div className="flex items-center gap-2 select-none cursor-pointer">
           <Image src="/logo.svg" alt="DiviPay" width={30} height={30} draggable="false" className="select-none"/>
           <h1 className="text-2xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay</h1>
         </div>
-        <div className="hover:bg-gray-600 transition-colors duration-300 ease-out p-0 rounded-lg">
+        <div className="transition-colors duration-300 ease-out">
           <ThemeToggle theme={theme} setTheme={setTheme}/>
         </div>
       </div>
@@ -621,7 +621,7 @@ export default function Home() {
               animate={{ y: 0, scale: 1, opacity: 1 }}
               exit={{ y: 50, scale: 0.9, opacity: 0 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="bg-white dark:bg-[#373c45] rounded-md min-w-[90%] md:min-w-[500px] max-w-[95%] md:max-w-[700px] max-h-[80vh] overflow-auto p-4 sm:p-6 flex flex-col items-center"
+              className="bg-white dark:bg-[#373c45] rounded-md min-w-[90%] md:min-w-125 max-w-[95%] md:max-w-175 max-h-[80vh] overflow-auto p-4 sm:p-6 flex flex-col items-center"
             >
               <span className="text-lg sm:text-2xl poppins-bold text-[#1f1f1f] dark:text-white text-center">
                 DiviPay - Per Person Summary
@@ -799,7 +799,7 @@ export default function Home() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="bg-white dark:bg-[#373c45] rounded-md sm:min-w-[400px] max-w-[90vw] p-6 flex flex-col items-center max-h-[90vh] overflow-auto"
+              className="bg-white dark:bg-[#373c45] rounded-md sm:min-w-100 max-w-[90vw] p-6 flex flex-col items-center max-h-[90vh] overflow-auto"
             >
               <span className="text-xl sm:text-3xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay Bill Summary</span>
 
@@ -944,7 +944,7 @@ export default function Home() {
       >Split Expenses
       </motion.span>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-[90vw] sm:max-w-[400px] flex flex-col">
+      <form onSubmit={handleSubmit} className="w-full max-w-[90vw] sm:max-w-100 flex flex-col">
 
         {/* Name Input */}
         <div className="mb-10">
@@ -974,7 +974,7 @@ export default function Home() {
             <button
               type="button"
               onClick={addName}
-              className="p-[11px] rounded bg-[#d9d9d9] dark:bg-[#374151] hover:bg-blue-400 dark:hover:bg-blue-400 transition-colors "
+              className="p-2.75 rounded bg-[#d9d9d9] dark:bg-[#374151] hover:bg-blue-400 dark:hover:bg-blue-400 transition-colors "
             >
               <Image src={theme === "dark" ? '/plus-light.svg' : '/plus-dark.svg'} alt="Add" width={16} height={16 } onClick={addName} />
             </button>
@@ -1025,7 +1025,7 @@ export default function Home() {
           />
 
           {showDropdown && (
-            <ul className="absolute w-full max-w-[90vw] sm:max-w-[400px] border border-[#1f1f1f] dark:border-white mt-1 max-h-40 overflow-auto bg-[#e5e5e5] dark:bg-[#2f2f2f] rounded shadow-lg z-10">
+            <ul className="absolute w-full max-w-[90vw] sm:max-w-100 border border-[#1f1f1f] dark:border-white mt-1 max-h-40 overflow-auto bg-[#e5e5e5] dark:bg-[#2f2f2f] rounded shadow-lg z-10">
               {filteredCurrencies.length > 0 ? (
                 filteredCurrencies.map((currency, index) => (
                   <li
@@ -1055,7 +1055,7 @@ export default function Home() {
           >
             Add Purchased Items
           </motion.label>
-          <div className="w-full flex gap-[6px]">
+          <div className="w-full flex gap-1.5">
             <motion.input
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1097,7 +1097,7 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.5, duration: 0.8, ease: "easeOut" }}
             viewport={{once: true}}
-            className="flex flex-wrap gap-2 mb-3 w-full bg-[#e5e5e5] dark:bg-[#2f2f2f] p-2 rounded min-h-[50px]"
+            className="flex flex-wrap gap-2 mb-3 w-full bg-[#e5e5e5] dark:bg-[#2f2f2f] p-2 rounded min-h-12.5"
           >
             {names.map((name, index) => (
               <motion.div 
@@ -1115,7 +1115,7 @@ export default function Home() {
                   {name}
                 </button>
                 {selectedNames.includes(name) && (
-                  <input type="number" placeholder="Portion" min="1" value={portions[name] ?? ""} onChange={(e) => handlePortionChange(name, e.target.value)} className="w-16 p-1 rounded bg-[#d9d9d9] dark:bg-[#374151] text-[#1f1f1f] dark:text-white placeholder:text-sm placeholder:ml-[2px]" />
+                  <input type="number" placeholder="Portion" min="1" value={portions[name] ?? ""} onChange={(e) => handlePortionChange(name, e.target.value)} className="w-16 p-1 rounded bg-[#d9d9d9] dark:bg-[#374151] text-[#1f1f1f] dark:text-white placeholder:text-sm placeholder:ml-0.5" />
                 )}
               </motion.div>
             ))}
@@ -1174,7 +1174,7 @@ export default function Home() {
           >
             Add Discounts
           </motion.label>
-          <div className="w-full flex gap-[6px]">
+          <div className="w-full flex gap-1.5">
             <motion.input
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1248,7 +1248,7 @@ export default function Home() {
             Add Taxes
           </motion.label>
 
-          <div className="w-full flex gap-[6px]">
+          <div className="w-full flex gap-1.5">
             <motion.input
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1395,10 +1395,10 @@ export default function Home() {
       
 
       {/* --- OFF-SCREEN RENDER CONTAINERS FOR HTML2CANVAS --- */}
-      <div className="absolute top-[-10000px] left-[-10000px] opacity-0 pointer-events-none z-[-50]">
+      <div className="absolute -top-2500 -left-2500 opacity-0 pointer-events-none -z-50">
         
         {/* Bill Hidden Container */}
-        <div id="bill-container-hidden" className="bg-white dark:bg-[#373c45] min-w-[400px] max-w-[1900px] p-6 flex flex-col items-center">
+        <div id="bill-container-hidden" className="bg-white dark:bg-[#373c45] min-w-100 max-w-475 p-6 flex flex-col items-center">
           <span className="text-3xl poppins-bold text-[#1f1f1f] dark:text-white">DiviPay Bill Summary</span>
           <div className="w-full mt-4 flex justify-center">
             <span className="poppins-regular text-sm text-[#1f1f1f] dark:text-white">
@@ -1466,7 +1466,7 @@ export default function Home() {
         </div>
 
         {/* Per Person Hidden Container */}
-        <div id="perPerson-container-hidden" className="bg-white dark:bg-[#373c45] min-w-[700px] max-w-[1900px] overflow-visible p-6 flex flex-col items-center">
+        <div id="perPerson-container-hidden" className="bg-white dark:bg-[#373c45] min-w-175 max-w-475 overflow-visible p-6 flex flex-col items-center">
           <span className="text-2xl poppins-bold text-[#1f1f1f] dark:text-white text-center">DiviPay - Per Person Summary</span>
           <div className="w-full mt-6">
             <span className="poppins-semibold text-lg text-[#1f1f1f] dark:text-white">Item-wise Breakdown</span>
@@ -1558,24 +1558,34 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="mt-10 w-full flex justify-center">
+      <div className="mt-10 w-full flex flex-col items-center justify-center gap-2">
         <div>
           <span className="text-[#1f1f1f] dark:text-white poppins-medium select-none" draggable="false">Made with ❤️ by </span>
           <motion.a
             whileHover={{
               scale: 1.2,
-              rotate: [0, 10, -10, 10, -10, 0], // Shakes left & right
+              rotate: [0, 10, -10, 10, -10, 0],
               y: [-2, 2, -2],
               x: 10,
-              transition: { duration: 0.5 }, // Ensures the effect runs only once
+              transition: { duration: 0.5 },
             }}
             whileTap={{ scale: 0.9 }}
             href="https://www.github.com/aryannaik225"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-blue-500 poppins-medium inline-block"
           >
             Aryan Naik
           </motion.a>
         </div>
+
+        <Link 
+          href="/privacy"
+          className="text-xs poppins-regular text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors underline-offset-4 hover:underline"
+        >
+          Privacy Policy
+        </Link>
+        
       </div>
     </div>
   );
