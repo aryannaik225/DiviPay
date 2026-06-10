@@ -3,6 +3,9 @@
       "target": {
         "namespace": "android_app",
         "package_name": "com.aryannaik225.divipay",
-        "sha256_cert_fingerprints": ["61:19:00:59:5C:1E:CE:77:61:36:04:E7:27:93:CB:32:71:7F:26:D5:83:8B:BE:F6:05:66:BA:5D:1E:6D:EE:00"]
+        "sha256_cert_fingerprints": [
+          "42:9C:89:A4:89:4C:51:FE:8A:2E:EE:03:40:C3:22:3F:BC:00:99:23:D6:72:85:5F:83:D2:8A:08:79:D5:0B:AF",
+          "61:19:00:59:5C:1E:CE:77:61:36:04:E7:27:93:CB:32:71:7F:26:D5:83:8B:BE:F6:05:66:BA:5D:1E:6D:EE:00"
+        ]
       }
     }]
