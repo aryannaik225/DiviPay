@@ -937,7 +937,7 @@ export default function Home() {
 
       <motion.span 
         initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
         viewport={{once: true}}
         className="text-xl md:text-2xl poppins-bold text-[#1f1f1f] dark:text-white mb-10 underline"
@@ -950,7 +950,7 @@ export default function Home() {
         <div className="mb-10">
           <motion.label
             initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
             viewport={{once: true}}
             className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular"
@@ -959,7 +959,7 @@ export default function Home() {
           </motion.label>
           <motion.div 
             initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
             viewport={{once: true}}
             className="flex items-center gap-2"
@@ -1006,7 +1006,7 @@ export default function Home() {
         {/* Currency Input */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2, duration: 0.8, ease: "easeOut" }}
           viewport={{once: true}}
           className="w-full"
@@ -1048,7 +1048,7 @@ export default function Home() {
         <div className="mb-8 mt-10">
           <motion.label
             initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.3, duration: 0.8, ease: "easeOut" }}
             viewport={{once: true}}
             className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular"
@@ -1058,7 +1058,7 @@ export default function Home() {
           <div className="w-full flex gap-1.5">
             <motion.input
               initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.35, duration: 0.8, ease: "easeOut" }}
               viewport={{once: true}} 
               type="text"
@@ -1069,7 +1069,7 @@ export default function Home() {
             />
             <motion.input
               initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.4, duration: 0.8, ease: "easeOut" }}
               viewport={{once: true}}
               type="number"
@@ -1082,7 +1082,7 @@ export default function Home() {
           </div>
           <motion.input 
             initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.45, duration: 0.8, ease: "easeOut" }}
             viewport={{once: true}}
             type="number"
@@ -1094,7 +1094,7 @@ export default function Home() {
 
           <motion.div 
             initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.5, duration: 0.8, ease: "easeOut" }}
             viewport={{once: true}}
             className="flex flex-wrap gap-2 mb-3 w-full bg-[#e5e5e5] dark:bg-[#2f2f2f] p-2 rounded min-h-12.5"
@@ -1122,7 +1122,7 @@ export default function Home() {
           </motion.div>
           <motion.button
             initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.55, duration: 0.8, ease: "easeOut" }}
             viewport={{once: true}}
             type="button"
@@ -1167,7 +1167,7 @@ export default function Home() {
         <div className="w-full mt-10">
           <motion.label
             initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.7, duration: 0.8, ease: "easeOut" }}
             viewport={{once: true}} 
             className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular"
@@ -1177,7 +1177,7 @@ export default function Home() {
           <div className="w-full flex gap-1.5">
             <motion.input
               initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.75, duration: 0.8, ease: "easeOut" }}
               viewport={{once: true}} 
               type="number"
@@ -1188,7 +1188,7 @@ export default function Home() {
             />
             <motion.select
               initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.8, duration: 0.8, ease: "easeOut" }}
               viewport={{once: true}}
               value={discountSymbol}
@@ -1201,7 +1201,7 @@ export default function Home() {
           </div>
           <motion.button
             initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.85, duration: 0.8, ease: "easeOut" }}
             viewport={{once: true}}
             type="button"
@@ -1240,7 +1240,7 @@ export default function Home() {
         <div className="w-full mt-10">
           <motion.label 
             initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
             viewport={{once: true}}
             className="block text-[#1f1f1f] dark:text-white mb-1 poppins-regular"
@@ -1251,7 +1251,7 @@ export default function Home() {
           <div className="w-full flex gap-1.5">
             <motion.input
               initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
               viewport={{once: true}} 
               type="text" 
@@ -1262,7 +1262,7 @@ export default function Home() {
             />
             <motion.input 
               initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.25, duration: 0.8, ease: "easeOut" }}
               viewport={{once: true}}
               type="number"
@@ -1273,7 +1273,7 @@ export default function Home() {
             />
             <motion.select
               initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.5, duration: 0.8, ease: "easeOut" }}
               viewport={{once: true}}
               value={taxSymbol}
@@ -1287,7 +1287,7 @@ export default function Home() {
 
           <motion.button
             initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.75, duration: 0.8, ease: "easeOut" }}
             viewport={{once: true}}
             type="button"
@@ -1326,7 +1326,7 @@ export default function Home() {
         <div className="w-full mt-10">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
             viewport={{once: true}}
             className="flex items-center gap-3 mb-4"
@@ -1381,7 +1381,7 @@ export default function Home() {
 
         <motion.button
           initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1.5, y: 0 }}
+          animate={{ opacity: 1.5, y: 0 }}
           transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
           viewport={{once: true}}
           type="submit"
